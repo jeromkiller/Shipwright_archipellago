@@ -48,7 +48,12 @@ void ArchipelagoConsoleWindow::DrawElement() {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15.0f, 12.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 1.0f));
 
-    if (ImGui::BeginChild("ScrollingRegion", ImVec2(0, 400), ImGuiChildFlags_AlwaysUseWindowPadding,
+    UIWidgets::ButtonOptions sendButtonOptions = UIWidgets::ButtonOptions().Color(THEME_COLOR).Size(ImVec2(0.0, 0.0));
+    int chatbarHeight = ImGui::GetTextLineHeight() + ImGui::GetStyle().ItemSpacing.x
+        + sendButtonOptions.padding.y
+        + 5.0f * 2.0f; // FrameBorderSize * 2
+
+    if (ImGui::BeginChild("ScrollingRegion", ImVec2(0, -chatbarHeight), ImGuiChildFlags_AlwaysUseWindowPadding,
                           ImGuiWindowFlags_HorizontalScrollbar)) {
 
         for (const std::vector<AP_Text::ColoredTextNode>& line : Items) {
@@ -90,7 +95,7 @@ void ArchipelagoConsoleWindow::DrawElement() {
 
     ImGui::SameLine();
 
-    if (UIWidgets::Button("Send", UIWidgets::ButtonOptions().Color(THEME_COLOR).Size(ImVec2(0.0, 0.0)))) {
+    if (UIWidgets::Button("Send", sendButtonOptions)) {
         ArchipelagoClient::GetInstance().SendMessageToConsole(std::string(textEntryBuf));
         textEntryBuf[0] = '\0';
         keepFocus = true;
