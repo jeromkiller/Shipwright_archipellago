@@ -681,6 +681,17 @@ RandomizerGet ArchipelagoClient::GetIceTrapItem() {
     return RandomElement(archipelagoIceTrapModels);
 }
 
+std::string ArchipelagoClient::GetApItemName(RandomizerCheck rc) {
+    std::string item_name = gSaveContext.ship.quest.data.archipelago.locations[rc].itemName;
+    std::string player_name = gSaveContext.ship.quest.data.archipelago.locations[rc].playerName;
+    if(player_name.back() == 's') {
+        player_name += "' ";
+    } else {
+        player_name + "'s ";
+    }
+    return player_name + item_name;
+}
+
 extern "C" void Archipelago_InitSaveFile() {
     gSaveContext.ship.quest.data.archipelago.isArchipelago = 1;
 

@@ -672,12 +672,12 @@ void Context::ParseArchipelagoOptions() {
     mOptions[RSK_MIDO_HINT].Set(RO_GENERIC_NO);
     mOptions[RSK_FROGS_HINT].Set(RO_GENERIC_NO);
     mOptions[RSK_OOT_HINT].Set(RO_GENERIC_NO);
-    mOptions[RSK_KAK_10_SKULLS_HINT].Set(RO_GENERIC_NO);
-    mOptions[RSK_KAK_20_SKULLS_HINT].Set(RO_GENERIC_NO);
-    mOptions[RSK_KAK_30_SKULLS_HINT].Set(RO_GENERIC_NO);
-    mOptions[RSK_KAK_40_SKULLS_HINT].Set(RO_GENERIC_NO);
-    mOptions[RSK_KAK_50_SKULLS_HINT].Set(RO_GENERIC_NO);
-    mOptions[RSK_KAK_100_SKULLS_HINT].Set(RO_GENERIC_NO);
+    mOptions[RSK_KAK_10_SKULLS_HINT].Set(RO_GENERIC_YES);
+    mOptions[RSK_KAK_20_SKULLS_HINT].Set(RO_GENERIC_YES);
+    mOptions[RSK_KAK_30_SKULLS_HINT].Set(RO_GENERIC_YES);
+    mOptions[RSK_KAK_40_SKULLS_HINT].Set(RO_GENERIC_YES);
+    mOptions[RSK_KAK_50_SKULLS_HINT].Set(RO_GENERIC_YES);
+    mOptions[RSK_KAK_100_SKULLS_HINT].Set(RO_GENERIC_YES);
     mOptions[RSK_MASK_SHOP_HINT].Set(RO_GENERIC_NO);
     mOptions[RSK_BIGGORON_HINT].Set(RO_GENERIC_NO);
     mOptions[RSK_BIG_POES_HINT].Set(RO_GENERIC_NO);
@@ -688,7 +688,7 @@ void Context::ParseArchipelagoOptions() {
     mOptions[RSK_SCRUB_TEXT_HINT].Set(RO_GENERIC_NO);
     mOptions[RSK_MERCHANT_TEXT_HINT].Set(RO_GENERIC_NO);
     mOptions[RSK_FISHING_POLE_HINT].Set(RO_GENERIC_NO);
-    mOptions[RSK_HINT_CLARITY].Set(0);
+    mOptions[RSK_HINT_CLARITY].Set(RO_HINT_CLARITY_CLEAR);
     mOptions[RSK_HINT_DISTRIBUTION].Set(0);
     if (slotData["maps_and_compasses"] == 0) {
         mOptions[RSK_SHUFFLE_MAPANDCOMPASS].Set(RO_DUNGEON_ITEM_LOC_STARTWITH);
