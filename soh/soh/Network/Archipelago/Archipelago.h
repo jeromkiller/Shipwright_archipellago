@@ -58,7 +58,7 @@ class ArchipelagoClient {
     const std::vector<ApItem>& GetScoutedItems();
 
     bool IsConnected();
-    void CheckLocation(RandomizerCheck SoH_check_id);
+    void CheckLocation(RandomizerCheck sohCheckId);
 
     void OnItemReceived(const ApItem apItem);
     void QueueItem(const ApItem item);
@@ -68,6 +68,7 @@ class ArchipelagoClient {
     void SendMessageToConsole(const std::string message);
     void Poll();
     void ResetQueue();
+    void OpenLocalHint(RandomizerCheck sohCheckId, bool important);
 
     bool slotMatch(const std::string& slotName, const std::string& roomHash);
 

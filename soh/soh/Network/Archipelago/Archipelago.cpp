@@ -530,6 +530,27 @@ void ArchipelagoClient::ResetQueue() {
     std::swap(receiveQueue, empty);
 }
 
+void ArchipelagoClient::OpenLocalHint(RandomizerCheck sohCheckId, bool important) {
+    if (sohCheckId == RC_UNKNOWN_CHECK) {
+        ArchipelagoConsole_SendMessage("[ERROR] Trying to hint an unknown location (RC_UNKOWN_CHECK), skipping");
+        return;
+    }
+    
+    if (!IsConnected()) {
+        return;
+    }
+
+    std::string apName = Rando::StaticData::GetLocation(sohCheckId)->GetName();
+    if (apName.empty()) {
+        return;
+    }
+
+    APClient::HintStatus hintStatus = important ? APClient::HINT_PRIORITY : APClient::HINT_UNSPECIFIED;
+
+    int64_t apItemId = apClient->get_location_id(std::string(apName));
+    apClient->CreateHints({apItemId}, -1, hintStatus);
+}
+
 bool ArchipelagoClient::slotMatch(const std::string& slotName, const std::string& roomHash) {
     if (apClient == nullptr) {
         return false;
@@ -684,10 +705,12 @@ RandomizerGet ArchipelagoClient::GetIceTrapItem() {
 std::string ArchipelagoClient::GetApItemName(RandomizerCheck rc) {
     std::string item_name = gSaveContext.ship.quest.data.archipelago.locations[rc].itemName;
     std::string player_name = gSaveContext.ship.quest.data.archipelago.locations[rc].playerName;
-    if(player_name.back() == 's') {
-        player_name += "' ";
-    } else {
-        player_name + "'s ";
+    if(!player_name.empty()) {
+        if(player_name.back() == 's') {
+            player_name += "' ";
+        } else {
+            player_name += "'s ";
+        }
     }
     return player_name + item_name;
 }
