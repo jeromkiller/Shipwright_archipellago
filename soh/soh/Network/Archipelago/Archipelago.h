@@ -5,6 +5,7 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 #include <queue>
+#include <map>
 #include "ArchipelagoTypes.h"
 
 // Forward declaration
@@ -32,6 +33,13 @@ class ArchipelagoClient {
         uint64_t index;
     };
 
+    struct ApForeignHint {
+        std::string locationName;
+        std::string playerName;
+        uint64_t locationId;
+        uint64_t playerId;
+    };
+
     static ArchipelagoClient& GetInstance();
 
     bool StartClient();
@@ -42,6 +50,7 @@ class ArchipelagoClient {
     void SynchItems();
     void SynchSentLocations();
     void SynchReceivedLocations();
+    void InitForeignHints();
 
     // getters
     int GetSlot() const;
@@ -53,7 +62,8 @@ class ArchipelagoClient {
     void SendDeathLink();
     void SetDeathLinkTag();
     RandomizerGet GetIceTrapItem();
-    std::string GetApItemName(RandomizerCheck rc);
+    std::string GetApItemHint(RandomizerCheck rc);
+    std::string GetApLocationHint(RandomizerHint rh, uint8_t index);
     const nlohmann::json GetSlotData();
     const std::vector<ApItem>& GetScoutedItems();
 
@@ -79,6 +89,7 @@ class ArchipelagoClient {
     int retries;
     std::string uri;
     std::string password;
+    std::unordered_map<RandomizerHint, std::vector<ApForeignHint>> foreignHints;
 
   protected:
     ArchipelagoClient();

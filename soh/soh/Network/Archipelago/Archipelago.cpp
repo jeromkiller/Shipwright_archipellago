@@ -93,9 +93,10 @@ bool ArchipelagoClient::StartClient() {
     apClient->set_slot_connected_handler([&](const nlohmann::json data) {
         CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 3); // slot connected
         ArchipelagoConsole_SendMessage("[LOG] Connected.");
-        ArchipelagoClient::StartLocationScouts();
-
         slotData = data;
+
+        ArchipelagoClient::StartLocationScouts();
+        ArchipelagoClient::InitForeignHints();
 
         std::string clientVersionMajor = AP_Client_consts::AP_WORLD_VERSION_MAJOR;
         std::string clientVersionMinor = AP_Client_consts::AP_WORLD_VERSION_MINOR;
@@ -390,6 +391,29 @@ void ArchipelagoClient::SynchReceivedLocations() {
     // Open checks that have been found previously but went unsaved
     for (const int64_t apLoc : apClient->get_checked_locations()) {
         QueueExternalCheck(apLoc);
+    }
+}
+
+void ArchipelagoClient::InitForeignHints() {
+    foreignHints.clear();
+    for (int h = RH_NONE; h < RH_MAX; h++) {
+        foreignHints[(RandomizerHint)h] = {};
+    }
+
+    std::map<std::string, std::vector<std::array<int, 2>>> hintsData = slotData["hint_list"];
+    for(const auto& hintData : hintsData) {
+        RandomizerHint hintKey = static_cast<RandomizerHint>(Rando::StaticData::hintNameToEnum[hintData.first]);
+        std::vector<ApForeignHint> foreignLocations;
+        for(const auto& hintLocation : hintData.second) {
+            ApForeignHint foreignHint;
+            foreignHint.playerId = hintLocation[0];
+            foreignHint.locationId = hintLocation[1];
+            foreignHint.playerName = apClient->get_player_alias(foreignHint.playerId);
+            const std::string& game = apClient->get_player_game(foreignHint.playerId);
+            foreignHint.locationName = apClient->get_location_name(foreignHint.locationId, game);
+            foreignLocations.push_back(foreignHint);
+        }
+        foreignHints[hintKey] = foreignLocations;
     }
 }
 
@@ -702,7 +726,7 @@ RandomizerGet ArchipelagoClient::GetIceTrapItem() {
     return RandomElement(archipelagoIceTrapModels);
 }
 
-std::string ArchipelagoClient::GetApItemName(RandomizerCheck rc) {
+std::string ArchipelagoClient::GetApItemHint(RandomizerCheck rc) {
     std::string item_name = gSaveContext.ship.quest.data.archipelago.locations[rc].itemName;
     std::string player_name = gSaveContext.ship.quest.data.archipelago.locations[rc].playerName;
     if(!player_name.empty()) {
@@ -713,6 +737,20 @@ std::string ArchipelagoClient::GetApItemName(RandomizerCheck rc) {
         }
     }
     return player_name + item_name;
+}
+
+std::string ArchipelagoClient::GetApLocationHint(RandomizerHint rh, uint8_t index) {
+    ApForeignHint hintData = foreignHints[rh][index];
+    std::string location_name = hintData.locationName;
+    std::string player_name = hintData.playerName;
+    if(!player_name.empty()) {
+        if(player_name.back() == 's') {
+            player_name += "' ";
+        } else {
+            player_name += "'s ";
+        }
+    }
+    return player_name + location_name;
 }
 
 extern "C" void Archipelago_InitSaveFile() {
@@ -769,6 +807,22 @@ void LoadArchipelagoData() {
                     ARRAY_COUNT(gSaveContext.ship.quest.data.archipelago.locations[i].playerName));
             });
         });
+
+    SaveManager::Instance->LoadArray("hints", RH_MAX, [&](size_t hintKey) {
+        nlohmann::json json;
+        SaveManager::Instance->LoadData("", json);
+        std::vector<ArchipelagoClient::ApForeignHint> loadedHints;
+        std::string d = json.dump();
+        for(auto foreignHintData : json["ForeignLocation"]) {
+            ArchipelagoClient::ApForeignHint hint;
+            hint.locationId = foreignHintData["LocationId"];
+            hint.playerId = foreignHintData["PlayerId"];
+            hint.locationName = foreignHintData["LocationName"];
+            hint.playerName = foreignHintData["PlayerName"];
+            loadedHints.push_back(hint);
+        };
+        ArchipelagoClient::GetInstance().foreignHints[static_cast<RandomizerHint>(hintKey)] = loadedHints;
+    });
 }
 
 void SaveArchipelagoData(SaveContext* saveContext, int sectionID, bool fullSave) {
@@ -790,6 +844,21 @@ void SaveArchipelagoData(SaveContext* saveContext, int sectionID, bool fullSave)
                                                 saveContext->ship.quest.data.archipelago.locations[i].playerName);
             });
         });
+
+    SaveManager::Instance->SaveArray("hints", RH_MAX, [&](size_t hintKey) {
+        const std::vector<ArchipelagoClient::ApForeignHint>& hints = ArchipelagoClient::GetInstance().foreignHints[(RandomizerHint)hintKey];
+        SaveManager::Instance->SaveStruct("", [&]() {
+            SaveManager::Instance->SaveData("HintKey", Rando::StaticData::hintNames[(uint32_t)hintKey].GetEnglish(MF_CLEAN));
+            SaveManager::Instance->SaveArray("ForeignLocation", hints.size(), [&](size_t i) {
+                SaveManager::Instance->SaveStruct("", [&]() {
+                    SaveManager::Instance->SaveData("LocationId", hints[i].locationId);
+                    SaveManager::Instance->SaveData("LocationName", hints[i].locationName);
+                    SaveManager::Instance->SaveData("PlayerId", hints[i].playerId);
+                    SaveManager::Instance->SaveData("PlayerName", hints[i].playerName);
+                });
+            });
+        });
+    });
 }
 
 void InitArchipelagoData(bool isDebug) {

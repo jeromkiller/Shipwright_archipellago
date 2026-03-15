@@ -414,6 +414,7 @@ typedef enum {
     RA_ICE_CAVERN,
     RA_GERUDO_TRAINING_GROUND,
     RA_GANONS_CASTLE,
+    RA_ARCHIPELAGO_FOREIGN,
     RA_MAX
 } RandomizerArea;
 
@@ -6286,6 +6287,8 @@ typedef enum {
     RHT_DODONGOS_CAVERN_GRASS,
     RHT_BOTTOM_OF_THE_WELL_GRASS,
     RHT_JABU_JABUS_BELLY_GRASS,
+    // ARCHIPELAGO
+    RHT_ARCHIPELAGO_FOREIGN,
     // MAX
     RHT_MAX,
 } RandomizerHintTextKey;

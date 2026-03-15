@@ -143,6 +143,7 @@ class Context {
     void ParseArchipelagoTricks();
     void ParseArchipelagoExcludedLocations();
     void ParseArchipelagoItemsLocations(const std::vector<ArchipelagoClient::ApItem>& slot_data);
+    void ParseArchipelagoHints();
 
     /**
      * @brief Get the hash for the current seed.
