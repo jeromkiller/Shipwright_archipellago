@@ -564,6 +564,12 @@ void ArchipelagoClient::OpenLocalHint(RandomizerCheck sohCheckId, bool important
         return;
     }
 
+    Rando::ItemLocation* itemLoc = Rando::Context::GetInstance()->GetItemLocation(sohCheckId);
+    Rando::Item item = itemLoc->GetPlacedItem();
+    if (item.GetCategory() == ITEM_CATEGORY_JUNK) {
+        return;
+    }
+    
     std::string apName = Rando::StaticData::GetLocation(sohCheckId)->GetName();
     if (apName.empty()) {
         return;
