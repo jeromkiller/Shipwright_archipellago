@@ -555,6 +555,11 @@ void ArchipelagoClient::ResetQueue() {
 }
 
 void ArchipelagoClient::OpenLocalHint(RandomizerCheck sohCheckId, bool important) {
+    // Only open up the hint if we're using clear hints
+    if (Rando::Context::GetInstance()->GetOption(RSK_HINT_CLARITY).IsNot(RO_HINT_CLARITY_CLEAR)) {
+        return;
+    }
+
     if (sohCheckId == RC_UNKNOWN_CHECK) {
         ArchipelagoConsole_SendMessage("[ERROR] Trying to hint an unknown location (RC_UNKOWN_CHECK), skipping");
         return;
@@ -579,6 +584,100 @@ void ArchipelagoClient::OpenLocalHint(RandomizerCheck sohCheckId, bool important
 
     int64_t apItemId = apClient->get_location_id(std::string(apName));
     apClient->CreateHints({apItemId}, -1, hintStatus);
+}
+
+void ArchipelagoClient::OnDialogHook() {
+    // Only open up the hint if we're using clear hints
+    if (Rando::Context::GetInstance()->GetOption(RSK_HINT_CLARITY).IsNot(RO_HINT_CLARITY_CLEAR)) {
+        return;
+    }
+
+    // Here we can check for the right message and open up its associated hint
+    MessageContext* msgCtx = &(gPlayState->msgCtx);
+    Actor* actor = msgCtx->talkActor;
+    std::vector<ApForeignHint>* hintList = nullptr;
+    RandomizerHint rh = RH_NONE;
+    switch (msgCtx->textId) {
+        case TEXT_GANONDORF:
+            rh = RH_GANONDORF_HINT;
+            break;
+        case TEXT_SHEIK_NEED_HOOK:
+        case TEXT_SHEIK_HAVE_HOOK:        
+            rh = RH_SHEIK_HINT;
+            break;
+        case TEXT_DAMPES_DIARY:
+            rh = RH_DAMPES_DIARY;
+            break;
+        case TEXT_CHEST_GAME_PROCEED:
+        case TEXT_CHEST_GAME_REAL_GAMBLER:
+        case TEXT_CHEST_GAME_THANKS_A_LOT:
+            rh = RH_GREG_RUPEE;
+            break;
+        case TEXT_ALTAR_CHILD:
+            rh = RH_ALTAR_CHILD;
+            break;
+        case TEXT_ALTAR_ADULT:
+            rh = RH_ALTAR_ADULT;
+            break;
+        case TEXT_SARIA_SFM:
+        case TEXT_SARIAS_SONG_FACE_TO_FACE:
+        case TEXT_SARIAS_SONG_FOREST_SOUNDS:
+        case TEXT_SARIAS_SONG_MR_DARUNIA:
+        case TEXT_SARIAS_SONG_SPIRITUAL_WATER:
+        case TEXT_SARIAS_SONG_SPIRITUAL_FIRE:
+        case TEXT_SARIAS_SONG_DREAD_CASTLE:
+        case TEXT_SARIAS_SONG_DIFFERENT_OCARINA:
+        case TEXT_SARIAS_SONG_EYES_DARKNESS_STORM:
+        case TEXT_SARIAS_SONG_DESERT_GODDESS:
+        case TEXT_SARIAS_SONG_TEMPLES:
+        case TEXT_SARIAS_SONG_FOREST_TEMPLE:
+        case TEXT_SARIAS_SONG_GLAD_NOW:
+        case TEXT_SARIAS_SONG_IMPRISON_GANONDORF:
+        case TEXT_SARIAS_SONG_CHANNELING_POWER:
+            rh = RH_SARIA_HINT;
+            break;
+        case TEXT_MIDO_SPEAK_TO_MIDO_FIRST_TIME:
+        case TEXT_MIDO_SPEAK_TO_MIDO_AGAIN:
+        case TEXT_MIDO_HOME_AFTER_ZELDAS_LETTER:
+        case TEXT_MIDO_HOME_BEFORE_ZELDAS_LETTER:
+            rh = RH_MIDO_HINT;
+            break;
+        case TEXT_FISHING_POND_START:
+        case TEXT_FISHING_POND_START_MET:
+            rh = RH_FISHING_POLE;
+            break;
+        case TEXT_NEED_SPECIAL_KEY: {
+            switch (gPlayState->sceneNum) {
+                case SCENE_FOREST_TEMPLE:
+                    rh = RH_FOREST_BOSS_KEY_HINT;
+                    break;
+                case SCENE_FIRE_TEMPLE:
+                    rh = RH_FIRE_BOSS_KEY_HINT;
+                    break;
+                case SCENE_WATER_TEMPLE:
+                    rh = RH_WATER_BOSS_KEY_HINT;
+                    break;
+                case SCENE_SHADOW_TEMPLE:
+                    rh = RH_SHADOW_BOSS_KEY_HINT;
+                    break;
+                case SCENE_SPIRIT_TEMPLE:
+                    rh = RH_SPIRIT_BOSS_KEY_HINT;
+                    break;
+                case SCENE_GANONS_TOWER:
+                    rh = RH_GANONS_BOSS_KEY_HINT;
+                    break;
+            }
+            break;
+        }
+    }
+
+    if (rh == RH_NONE) {
+        return;
+    }
+
+    for(const ApForeignHint& foreignHint : foreignHints[rh]){
+        apClient->CreateHints({foreignHint.locationId}, foreignHint.playerId, APClient::HINT_UNSPECIFIED);
+    }
 }
 
 bool ArchipelagoClient::slotMatch(const std::string& slotName, const std::string& roomHash) {
@@ -904,6 +1003,9 @@ void RegisterArchipelago() {
 
     COND_HOOK(GameInteractor::OnPlayerDeath, IS_ARCHIPELAGO,
               []() { ArchipelagoClient::GetInstance().SendDeathLink(); });
+
+    COND_HOOK(GameInteractor::OnDialogMessage, IS_ARCHIPELAGO,
+              []() { ArchipelagoClient::GetInstance().OnDialogHook(); });
 }
 
 static RegisterShipInitFunc initFunc(RegisterArchipelago, { "IS_ARCHIPELAGO" });

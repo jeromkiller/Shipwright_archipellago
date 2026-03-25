@@ -36,8 +36,8 @@ class ArchipelagoClient {
     struct ApForeignHint {
         std::string locationName;
         std::string playerName;
-        uint64_t locationId;
-        uint64_t playerId;
+        int64_t locationId;
+        int64_t playerId;
     };
 
     static ArchipelagoClient& GetInstance();
@@ -79,7 +79,8 @@ class ArchipelagoClient {
     void Poll();
     void ResetQueue();
     void OpenLocalHint(RandomizerCheck sohCheckId, bool important);
-
+    void OnDialogHook();
+    
     bool slotMatch(const std::string& slotName, const std::string& roomHash);
 
     std::unique_ptr<APClient> apClient;
