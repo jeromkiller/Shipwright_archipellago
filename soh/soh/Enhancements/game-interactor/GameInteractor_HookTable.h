@@ -52,7 +52,7 @@ DEFINE_HOOK(OnPlayerBottleUpdate, (int16_t contents));
 DEFINE_HOOK(OnPlayerHoldUpShield, ());
 DEFINE_HOOK(OnPlayerFirstPersonControl, (Player * player));
 DEFINE_HOOK(OnPlayerProcessStick, ());
-DEFINE_HOOK(OnPlayerShieldControl, (float_t * sp50, float_t* sp54));
+DEFINE_HOOK(OnPlayerShieldControl, (float* sp50, float* sp54));
 DEFINE_HOOK(OnPlayDestroy, ());
 DEFINE_HOOK(OnPlayDrawBegin, ());
 DEFINE_HOOK(OnPlayDrawEnd, ());
@@ -90,6 +90,9 @@ DEFINE_HOOK(OnKaleidoUpdate, ());
 DEFINE_HOOK(OnRandomizerItemGivenHooks, (uint32_t rc, GetItemEntry gi, uint8_t isGiSkipped));
 DEFINE_HOOK(OnArchipelagoItemReceived, (uint32_t rg));
 DEFINE_HOOK(OnRandomizerExternalCheck, (uint32_t rc));
+
+// Messages
+DEFINE_HOOK(OnOpenText, (uint16_t * textId, bool* loadFromMessageTable));
 
 // Audio
 DEFINE_HOOK(OnSeqPlayerInit, (int32_t playerIdx, int32_t seqId));

@@ -1,4 +1,5 @@
 #include "debugSaveEditor.h"
+#include "soh/Enhancements/randomizer/randomizerTypes.h"
 #include "soh/util.h"
 #include "soh/SohGui/ImGuiUtils.h"
 #include "soh/OTRGlobals.h"
@@ -67,6 +68,7 @@ IntSliderOptions intSliderOptionsBase;
 ButtonOptions buttonOptionsBase;
 CheckboxOptions checkboxOptionsBase;
 ComboboxOptions comboboxOptionsBase;
+static std::map<std::string, ImGuiTextFilter> flagTableFilters;
 
 // Modification of gAmmoItems that replaces ITEM_NONE with the item in inventory slot it represents
 u8 gAllAmmoItems[] = {
@@ -358,7 +360,7 @@ void DrawInfoTab() {
 
     PushStyleInput(THEME_COLOR);
     ImGui::InputScalar("Bgs Day Count", ImGuiDataType_S32, &gSaveContext.bgsDayCount);
-    Tooltip("Total number of days elapsed since giving Biggoron the claim check");
+    Tooltip("Total number of days elapsed since receiving claim check from Biggoron");
     PopStyleInput();
 
     PushStyleInput(THEME_COLOR);
@@ -429,7 +431,7 @@ void DrawInfoTab() {
                     gSaveContext.highScores[i] |= fishSize & 0x7F;
                 }
                 char fishMsg[64];
-                std::sprintf(fishMsg, "Weight: %2.0f lbs", ((SQ(fishSize) * .0036) + .5));
+                std::snprintf(fishMsg, 64, "Weight: %2.0f lbs", ((SQ(fishSize) * .0036) + .5));
                 Tooltip(fishMsg);
                 PopStyleInput();
                 bool FishBool = gSaveContext.highScores[i] & 0x80;
@@ -444,7 +446,7 @@ void DrawInfoTab() {
                     gSaveContext.highScores[i] &= ~0x7F000000;
                     gSaveContext.highScores[i] |= (fishSize & 0x7F) << 0x18;
                 }
-                std::sprintf(fishMsg, "Weight: %2.0f lbs", ((SQ(fishSize) * .0036) + .5));
+                std::snprintf(fishMsg, 64, "Weight: %2.0f lbs", ((SQ(fishSize) * .0036) + .5));
                 Tooltip(fishMsg);
                 PopStyleInput();
                 FishBool = gSaveContext.highScores[i] & 0x80000000;
@@ -696,7 +698,77 @@ void DrawFlagTableArray16(const FlagTable& flagTable, uint16_t row, uint16_t& fl
         }
         ImGui::PopID();
     }
+
     ImGui::PopID();
+}
+
+static uint16_t& GetFlagTableEntry(const FlagTable& flagTable, size_t row) {
+    switch (flagTable.flagTableType) {
+        case EVENT_CHECK_INF:
+            return gSaveContext.eventChkInf[row];
+        case ITEM_GET_INF:
+            return gSaveContext.itemGetInf[row];
+        case INF_TABLE:
+            return gSaveContext.infTable[row];
+        case EVENT_INF:
+            return gSaveContext.eventInf[row];
+        case RANDOMIZER_INF:
+            return gSaveContext.ship.randomizerInf[row];
+        default: // Shouldn't be hit
+            assert(false);
+            return gSaveContext.eventChkInf[row];
+    }
+}
+
+static void DrawFlagTableSearchResults(const FlagTable& flagTable, ImGuiTextFilter& filter) {
+    bool hasMatches = false;
+
+    for (size_t row = 0; row < flagTable.size + 1; row++) {
+        uint16_t& flags = GetFlagTableEntry(flagTable, row);
+
+        for (int32_t flagIndex = 15; flagIndex >= 0; flagIndex--) {
+            uint16_t index = row * 16 + flagIndex;
+            auto descIt = flagTable.flagDescriptions.find(index);
+            const char* desc = descIt != flagTable.flagDescriptions.end() ? descIt->second : "";
+            std::string searchable = fmt::format("0x{:02X} {}", index, desc);
+            if (!filter.PassFilter(searchable.c_str())) {
+                continue;
+            }
+
+            hasMatches = true;
+
+            ImGui::PushID(index);
+            bool hasDescription = descIt != flagTable.flagDescriptions.end();
+            uint32_t bitMask = 1 << flagIndex;
+            ImVec4 themeColor = ColorValues.at(THEME_COLOR);
+            ImVec4 colorDark = { themeColor.x * 0.4f, themeColor.y * 0.4f, themeColor.z * 0.4f, themeColor.z };
+            PushStyleCheckbox(hasDescription ? themeColor : colorDark);
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4.0f, 3.0f));
+            bool flag = (flags & bitMask) != 0;
+            if (ImGui::Checkbox("##check", &flag)) {
+                if (flag) {
+                    flags |= bitMask;
+                } else {
+                    flags &= ~bitMask;
+                }
+            }
+            ImGui::PopStyleVar();
+            PopStyleCheckbox();
+
+            ImGui::SameLine();
+            if (hasDescription) {
+                ImGui::TextWrapped("0x%02X: %s", index, desc);
+            } else {
+                ImGui::Text("0x%02X", index);
+            }
+
+            ImGui::PopID();
+        }
+    }
+
+    if (!hasMatches) {
+        ImGui::Text("No flags match the current search.");
+    }
 }
 
 void DrawFlagsTab() {
@@ -1046,37 +1118,49 @@ void DrawFlagsTab() {
         }
 
         if (ImGui::TreeNode(flagTable.name)) {
-            for (size_t j = 0; j < flagTable.size + 1; j++) {
-                DrawGroupWithBorder(
-                    [&]() {
-                        if (j == 0) {
-                            for (int k = 0xF; k >= 0; k--) {
-                                ImGui::SameLine(37.5 + ((0xF - k) * 33.8));
-                                ImGui::Text("%X", k);
+            ImGui::PushID(flagTable.name);
+            ImGuiTextFilter& flagFilter = flagTableFilters[flagTable.name];
+            ImGui::SetNextItemWidth(ImGui::GetFontSize() * 16);
+            PushStyleInput(THEME_COLOR);
+            flagFilter.Draw();
+            PopStyleInput();
+            ImGui::Spacing();
+
+            if (!flagFilter.IsActive()) {
+                for (size_t j = 0; j < flagTable.size + 1; j++) {
+                    DrawGroupWithBorder(
+                        [&]() {
+                            if (j == 0) {
+                                for (int k = 0xF; k >= 0; k--) {
+                                    ImGui::SameLine(37.5 + ((0xF - k) * 33.8));
+                                    ImGui::Text("%X", k);
+                                }
                             }
-                        }
 
-                        ImGui::Text("%s", fmt::format("{:<2X}", j).c_str());
+                            ImGui::Text("%s", fmt::format("{:<2X}", j).c_str());
 
-                        switch (flagTable.flagTableType) {
-                            case EVENT_CHECK_INF:
-                                DrawFlagTableArray16(flagTable, j, gSaveContext.eventChkInf[j]);
-                                break;
-                            case ITEM_GET_INF:
-                                DrawFlagTableArray16(flagTable, j, gSaveContext.itemGetInf[j]);
-                                break;
-                            case INF_TABLE:
-                                DrawFlagTableArray16(flagTable, j, gSaveContext.infTable[j]);
-                                break;
-                            case EVENT_INF:
-                                DrawFlagTableArray16(flagTable, j, gSaveContext.eventInf[j]);
-                                break;
-                            case RANDOMIZER_INF:
-                                DrawFlagTableArray16(flagTable, j, gSaveContext.ship.randomizerInf[j]);
-                                break;
-                        }
-                    },
-                    flagTable.name);
+                            switch (flagTable.flagTableType) {
+                                case EVENT_CHECK_INF:
+                                    DrawFlagTableArray16(flagTable, j, gSaveContext.eventChkInf[j]);
+                                    break;
+                                case ITEM_GET_INF:
+                                    DrawFlagTableArray16(flagTable, j, gSaveContext.itemGetInf[j]);
+                                    break;
+                                case INF_TABLE:
+                                    DrawFlagTableArray16(flagTable, j, gSaveContext.infTable[j]);
+                                    break;
+                                case EVENT_INF:
+                                    DrawFlagTableArray16(flagTable, j, gSaveContext.eventInf[j]);
+                                    break;
+                                case RANDOMIZER_INF:
+                                    DrawFlagTableArray16(flagTable, j, gSaveContext.ship.randomizerInf[j]);
+                                    break;
+                            }
+                        },
+                        flagTable.name);
+                }
+            } else {
+                DrawFlagTableSearchResults(flagTable, flagFilter);
             }
 
             // make some buttons to help with fishsanity debugging
@@ -1108,6 +1192,7 @@ void DrawFlagsTab() {
                 }
             }
 
+            ImGui::PopID();
             ImGui::TreePop();
         }
     }
@@ -1120,7 +1205,9 @@ void DrawUpgrade(const std::string& categoryName, int32_t categoryId, const std:
     ImGui::PushID(categoryName.c_str());
     PushStyleCombobox(THEME_COLOR);
     ImGui::AlignTextToFramePadding();
-    if (ImGui::BeginCombo("##upgrade", names[CUR_UPG_VALUE(categoryId)].c_str())) {
+    auto value = (size_t)CUR_UPG_VALUE(categoryId);
+    auto name = value < names.size() ? names[value].c_str() : "Glitched";
+    if (ImGui::BeginCombo("##upgrade", name)) {
         for (size_t i = 0; i < names.size(); i++) {
             if (ImGui::Selectable(names[i].c_str())) {
                 Inventory_ChangeUpgrade(categoryId, i);
@@ -1141,7 +1228,8 @@ void DrawUpgradeIcon(const std::string& categoryName, int32_t categoryId, const 
     ImGui::PushID(categoryName.c_str());
 
     PushStyleButton(Colors::DarkGray);
-    uint8_t item = items[CUR_UPG_VALUE(categoryId)];
+    auto value = (size_t)CUR_UPG_VALUE(categoryId);
+    uint8_t item = value < items.size() ? items[value] : ITEM_NONE;
     if (item != ITEM_NONE) {
         const ItemMapEntry& slotEntry = itemMapping[item];
         if (ImGui::ImageButton(slotEntry.name.c_str(),
@@ -1305,6 +1393,39 @@ void DrawEquipmentTab() {
         "40",
     };
     DrawUpgrade("Deku Nut Capacity", UPG_NUTS, nutNames);
+
+    if (IS_RANDO &&
+        OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_BOMBCHU_BAG) == RO_BOMBCHU_BAG_PROGRESSIVE) {
+        const std::vector<std::string> bombchuNames = {
+            "None",
+            "20",
+            "30",
+            "50",
+        };
+        ImGui::Text("%s", "Bombchu Bag Capacity");
+        ImGui::SameLine();
+        ImGui::PushID("Bombchu Bag Capacity");
+        PushStyleCombobox(THEME_COLOR);
+        ImGui::AlignTextToFramePadding();
+        auto value = gSaveContext.ship.quest.data.randomizer.bombchuUpgradeLevel;
+        auto name = value < bombchuNames.size() ? bombchuNames[value].c_str() : "Glitched";
+        if (ImGui::BeginCombo("##upgrade", name)) {
+            for (size_t i = 0; i < bombchuNames.size(); i++) {
+                if (ImGui::Selectable(bombchuNames[i].c_str())) {
+                    gSaveContext.ship.quest.data.randomizer.bombchuUpgradeLevel = i;
+                    if (i > 0) {
+                        INV_CONTENT(ITEM_BOMBCHU) = ITEM_BOMBCHU;
+                    } else {
+                        INV_CONTENT(ITEM_BOMBCHU) = ITEM_NONE;
+                    }
+                }
+            }
+            ImGui::EndCombo();
+        }
+        PopStyleCombobox();
+        ImGui::PopID();
+        UIWidgets::Tooltip("Bombchu Bag Capapcity");
+    }
 }
 
 // Draws a toggleable icon for a quest item that is faded when disabled

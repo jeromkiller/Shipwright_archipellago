@@ -4,9 +4,7 @@
 #include "textures/do_action_static/do_action_static.h"
 #include "textures/icon_item_static/icon_item_static.h"
 #include "soh_assets.h"
-#include "soh/Enhancements/randomizer/randomizer_entrance.h"
 
-#include "libultraship/bridge.h"
 #include "soh/Enhancements/gameplaystats.h"
 #include "soh/Enhancements/custom-message/CustomMessageInterfaceAddon.h"
 #include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
@@ -2121,7 +2119,7 @@ u8 Item_Give(PlayState* play, u8 item) {
                 }
             }
         }
-        // update the adult/child equips when rando'd (accounting for equp swapped hookshot as child)
+        // update the adult/child equips when rando'd (accounting for equip swapped hookshot as child)
         if (IS_RANDO && LINK_IS_CHILD) {
             for (i = 1; i < ARRAY_COUNT(gSaveContext.adultEquips.buttonItems); i++) {
                 if (gSaveContext.adultEquips.buttonItems[i] == ITEM_HOOKSHOT) {
@@ -5386,15 +5384,17 @@ void Interface_Draw(PlayState* play) {
                                 interfaceCtx->counterDigits[3] -= 10;
                             }
 
+                            svar3 = 16;
                             if (interfaceCtx->counterDigits[2] != 0) {
                                 OVERLAY_DISP = Gfx_TextureI8(
                                     OVERLAY_DISP, ((u8*)((u8*)digitTextures[interfaceCtx->counterDigits[2]])), 8, 16,
-                                    PosX_SKC + 8, PosY_SKC, 8, 16, 1 << 10, 1 << 10);
+                                    PosX_SKC + 16, PosY_SKC, 8, 16, 1 << 10, 1 << 10);
+                                svar3 = 24;
                             }
 
                             OVERLAY_DISP =
                                 Gfx_TextureI8(OVERLAY_DISP, ((u8*)digitTextures[interfaceCtx->counterDigits[3]]), 8, 16,
-                                              PosX_SKC + 16, PosY_SKC, 8, 16, 1 << 10, 1 << 10);
+                                              PosX_SKC + svar3, PosY_SKC, 8, 16, 1 << 10, 1 << 10);
                         }
                         break;
                     default:

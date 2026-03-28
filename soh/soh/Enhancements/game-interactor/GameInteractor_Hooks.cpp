@@ -233,7 +233,7 @@ void GameInteractor_ExecuteOnPlayerFirstPersonControl(Player* player) {
     GameInteractor::Instance->ExecuteHooks<GameInteractor::OnPlayerFirstPersonControl>(player);
 }
 
-void GameInteractor_ExecuteOnPlayerShieldControl(float_t* sp50, float_t* sp54) {
+void GameInteractor_ExecuteOnPlayerShieldControl(float* sp50, float* sp54) {
     GameInteractor::Instance->ExecuteHooks<GameInteractor::OnPlayerShieldControl>(sp50, sp54);
 }
 
@@ -399,6 +399,13 @@ void GameInteractor_ExecuteOnArchipelagoItemReceived(uint32_t rg) {
 
 void GameInteractor_ExecuteOnRandomizerExternalCheck(uint32_t rc) {
     GameInteractor::Instance->ExecuteHooks<GameInteractor::OnRandomizerExternalCheck>(rc);
+}
+
+// MARK: Messages
+void GameInteractor_ExecuteOnOpenText(uint16_t* textId, bool* loadFromMessageTable) {
+    GameInteractor::Instance->ExecuteHooks<GameInteractor::OnOpenText>(textId, loadFromMessageTable);
+    GameInteractor::Instance->ExecuteHooksForID<GameInteractor::OnOpenText>(*textId, textId, loadFromMessageTable);
+    GameInteractor::Instance->ExecuteHooksForFilter<GameInteractor::OnOpenText>(textId, loadFromMessageTable);
 }
 
 // Mark: Audio

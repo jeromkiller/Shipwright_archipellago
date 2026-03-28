@@ -153,7 +153,7 @@ bool ItemLocation::GetIsSkipped() {
 }
 
 bool ItemLocation::IsHintable() const {
-    return isHintable;
+    return isHintable && !hidden;
 }
 
 void ItemLocation::SetAsHintable() {

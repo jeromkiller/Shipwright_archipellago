@@ -554,7 +554,7 @@ void SaveManager::StartupCheckAndInitMeta(int fileNum) {
     fileMetaInfo[fileNum].gsTokens = baseBlock["inventory"]["gsTokens"];
     fileMetaInfo[fileNum].isDoubleDefenseAcquired = baseBlock["isDoubleDefenseAcquired"];
     fileMetaInfo[fileNum].gregFound = false;
-    fileMetaInfo[fileNum].filenameLanguage = baseBlock["filenameLanguage"];
+    fileMetaInfo[fileNum].filenameLanguage = baseBlock.value("filenameLanguage", 0);
     fileMetaInfo[fileNum].hasWallet = !isRando;
     fileMetaInfo[fileNum].defense = baseBlock["inventory"]["defenseHearts"];
     fileMetaInfo[fileNum].health = baseBlock["health"];
@@ -1366,9 +1366,7 @@ void SaveManager::ThreadPoolWait() {
 
 bool SaveManager::SaveFile_Exist(int fileNum) {
     try {
-        bool exists = std::filesystem::exists(GetFileName(fileNum));
-        SPDLOG_INFO("File[{}] - {}", fileNum, exists ? "exists" : "does not exist");
-        return exists;
+        return std::filesystem::exists(GetFileName(fileNum));
     } catch (std::filesystem::filesystem_error const& ex) {
         SPDLOG_ERROR("Filesystem error");
         return false;

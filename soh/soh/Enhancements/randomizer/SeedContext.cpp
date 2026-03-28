@@ -2,7 +2,6 @@
 #include "static_data.h"
 #include "soh/OTRGlobals.h"
 #include "soh/Enhancements/item-tables/ItemTableManager.h"
-#include "3drando/shops.hpp"
 #include "dungeon.h"
 #include "logic.h"
 #include "entrance.h"
@@ -15,6 +14,7 @@
 #include "../kaleido.h"
 #include "soh/Network/Archipelago/Archipelago.h"
 #include "soh/Network/Archipelago/ArchipelagoConsoleWindow.h"
+#include "soh/Enhancements/randomizer/Traps.h"
 
 #include <fstream>
 #include <spdlog/spdlog.h>
@@ -137,8 +137,8 @@ ItemOverride& Context::GetItemOverride(size_t locKey) {
 void Context::PlaceItemInLocation(const RandomizerCheck locKey, const RandomizerGet item,
                                   const bool applyEffectImmediately, const bool setHidden) {
     const auto loc = GetItemLocation(locKey);
-    SPDLOG_DEBUG(StaticData::RetrieveItem(item).GetName().GetEnglish() + " placed at " +
-                 StaticData::GetLocation(locKey)->GetName() + "\n");
+    SPDLOG_DEBUG("{} placed at {}", StaticData::RetrieveItem(item).GetName().GetEnglish(),
+                 StaticData::GetLocation(locKey)->GetName());
 
     if (applyEffectImmediately || mOptions[RSK_LOGIC_RULES].Is(RO_LOGIC_GLITCHLESS)) {
         StaticData::RetrieveItem(item).ApplyEffect();
@@ -333,35 +333,21 @@ void Context::HintReset() {
 }
 
 void Context::CreateItemOverrides() {
-    SPDLOG_DEBUG("NOW CREATING OVERRIDES\n\n");
+    SPDLOG_DEBUG("NOW CREATING OVERRIDES");
     for (RandomizerCheck locKey : allLocations) {
         const auto loc = StaticData::GetLocation(locKey);
         // If this is an ice trap, store the disguise model in iceTrapModels
         const auto itemLoc = GetItemLocation(locKey);
         if (itemLoc->GetPlacedRandomizerGet() == RG_ICE_TRAP) {
-            RandomizerGet trickModel = RandomElementFromSet(possibleIceTrapModels);
-            if (trickModel == RG_EMPTY_BOTTLE) {
-                trickModel = RandomElement(StaticData::normalBottles);
-            }
-            if (trickModel == RG_GUARD_HOUSE_KEY) {
-                trickModel = RandomElement(StaticData::overworldKeys);
-            }
-            if (trickModel == RG_DEATH_MOUNTAIN_CRATER_BEAN_SOUL) {
-                trickModel = RandomElement(StaticData::beanSouls);
-            }
-            ItemOverride val(locKey, trickModel);
+            ItemOverride val(locKey, Traps::GetTrapTrickModel());
             iceTrapModels[locKey] = val.LooksLike();
-            val.SetTrickName(GetIceTrapName(val.LooksLike()));
+            val.SetTrickName(Traps::GetTrapName(val.LooksLike()));
             // If this is ice trap is in a shop, change the name based on what the model will look like
             overrides[locKey] = val;
         }
-        SPDLOG_DEBUG(loc->GetName());
-        SPDLOG_DEBUG(": ");
-        SPDLOG_DEBUG(itemLoc->GetPlacedItemName().GetEnglish());
-        SPDLOG_DEBUG("\n");
+        SPDLOG_DEBUG("{}: {}", loc->GetName(), itemLoc->GetPlacedItemName().GetEnglish());
     }
-    SPDLOG_DEBUG("Overrides Created: ");
-    SPDLOG_DEBUG(std::to_string(overrides.size()));
+    SPDLOG_DEBUG("Overrides Created: {}", std::to_string(overrides.size()));
 }
 
 bool Context::IsSeedGenerated() const {
@@ -764,7 +750,7 @@ void Context::ParseArchipelagoOptions() {
     mOptions[RSK_SHUFFLE_CHEST_MINIGAME].Set(RO_GENERIC_NO);
     mOptions[RSK_BIG_POE_COUNT].Set(slotData["big_poe_target_count"]);
     mOptions[RSK_SKIP_EPONA_RACE].Set(slotData["skip_epona_race"]);
-    mOptions[RSK_COMPLETE_MASK_QUEST].Set(slotData["complete_mask_quest"]);
+    mOptions[RSK_MASK_QUEST].Set(slotData["complete_mask_quest"]);
     mOptions[RSK_SKIP_SCARECROWS_SONG].Set(slotData["skip_scarecrows_song"]);
     mOptions[RSK_SKIP_PLANTING_BEANS].Set(RO_GENERIC_NO);
     mOptions[RSK_SKULLS_SUNS_SONG].Set(slotData["skulls_sun_song"]);
@@ -946,7 +932,7 @@ void Context::ParseArchipelagoItemsLocations(const std::vector<ArchipelagoClient
             if (item == RG_ICE_TRAP) {
                 RandomizerGet iceTrapItem = ArchipelagoClient::GetInstance().GetIceTrapItem();
                 overrides[rc] = ItemOverride(rc, iceTrapItem);
-                overrides[rc].SetTrickName(Text(GetIceTrapName(iceTrapItem)));
+                overrides[rc].SetTrickName(Text(Traps::GetTrapName(iceTrapItem)));
             }
         } else {
             // Other player item
@@ -984,12 +970,16 @@ void Context::ParseArchipelagoItemsLocations(const std::vector<ArchipelagoClient
 }
 void Context::ParseArchipelagoHints() {
     const auto& ApHintData = ArchipelagoClient::GetInstance().foreignHints;
+    const auto ctx = Rando::Context::GetInstance();
     for(const auto& ApHint: ApHintData) {
         const RandomizerHint hintKey = ApHint.first;
         const StaticHintInfo hintInfo = StaticData::staticHintInfoMap[ApHint.first];
         std::vector<RandomizerArea> areas;
         for(const ArchipelagoClient::ApForeignHint& hintData : ApHint.second) {
             areas.emplace_back(RA_ARCHIPELAGO_FOREIGN);
+        }
+        if (areas.empty()) {
+            areas.emplace_back(RA_NONE);
         }
         HintType hintType;
         std::vector<RandomizerHintTextKey> textKeys;
