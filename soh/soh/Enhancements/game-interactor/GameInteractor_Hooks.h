@@ -68,6 +68,7 @@ void GameInteractor_ExecuteOnDeleteFile(int32_t fileNum);
 
 // MARK: - Dialog
 void GameInteractor_ExecuteOnDialogMessage();
+void GameInteractor_ExecuteOnDialogClose();
 void GameInteractor_ExecuteOnPresentTitleCard();
 void GameInteractor_ExecuteOnInterfaceUpdate();
 void GameInteractor_ExecuteOnKaleidoscopeUpdate(int16_t inDungeonScene);

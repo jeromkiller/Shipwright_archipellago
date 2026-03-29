@@ -27,6 +27,7 @@
 #include "soh/SohGui/SohGui.hpp"
 #include "soh/OTRGlobals.h"
 #include "soh/Network/Anchor/Anchor.h"
+#include "soh/ObjectExtension/ObjectExtension.h"
 
 extern "C" {
 #include "variables.h"
@@ -401,10 +402,10 @@ void ArchipelagoClient::InitForeignHints() {
     }
 
     std::map<std::string, std::vector<std::array<int, 2>>> hintsData = slotData["hint_list"];
-    for(const auto& hintData : hintsData) {
+    for (const auto& hintData : hintsData) {
         RandomizerHint hintKey = static_cast<RandomizerHint>(Rando::StaticData::hintNameToEnum[hintData.first]);
         std::vector<ApForeignHint> foreignLocations;
-        for(const auto& hintLocation : hintData.second) {
+        for (const auto& hintLocation : hintData.second) {
             ApForeignHint foreignHint;
             foreignHint.playerId = hintLocation[0];
             foreignHint.locationId = hintLocation[1];
@@ -554,36 +555,182 @@ void ArchipelagoClient::ResetQueue() {
     std::swap(receiveQueue, empty);
 }
 
-void ArchipelagoClient::OpenLocalHint(RandomizerCheck sohCheckId, bool important) {
-    // Only open up the hint if we're using clear hints
-    if (Rando::Context::GetInstance()->GetOption(RSK_HINT_CLARITY).IsNot(RO_HINT_CLARITY_CLEAR)) {
-        return;
-    }
-
+void ArchipelagoClient::OpenLocalHint(RandomizerCheck sohCheckId) {
     if (sohCheckId == RC_UNKNOWN_CHECK) {
         ArchipelagoConsole_SendMessage("[ERROR] Trying to hint an unknown location (RC_UNKOWN_CHECK), skipping");
         return;
     }
-    
+
     if (!IsConnected()) {
         return;
     }
 
     Rando::ItemLocation* itemLoc = Rando::Context::GetInstance()->GetItemLocation(sohCheckId);
+    if (itemLoc->HasObtained()) {
+        return;
+    }
+
     Rando::Item item = itemLoc->GetPlacedItem();
     if (item.GetCategory() == ITEM_CATEGORY_JUNK) {
         return;
     }
-    
+
     std::string apName = Rando::StaticData::GetLocation(sohCheckId)->GetName();
     if (apName.empty()) {
         return;
     }
 
-    APClient::HintStatus hintStatus = important ? APClient::HINT_PRIORITY : APClient::HINT_UNSPECIFIED;
+    APClient::HintStatus hintStatus = APClient::HINT_UNSPECIFIED;
 
     int64_t apItemId = apClient->get_location_id(std::string(apName));
-    apClient->CreateHints({apItemId}, -1, hintStatus);
+    apClient->CreateHints({ apItemId }, -1, hintStatus);
+}
+
+void ArchipelagoClient::OnDialogCloseHook() {
+    // Only open up the hint if we're using clear hints
+    if (Rando::Context::GetInstance()->GetOption(RSK_HINT_CLARITY).IsNot(RO_HINT_CLARITY_CLEAR)) {
+        return;
+    }
+
+    // Here we can check for the right message and open up its associated hint
+    MessageContext* msgCtx = &(gPlayState->msgCtx);
+    Actor* actor = msgCtx->talkActor;
+    std::shared_ptr<Rando::Context> rndCtx = Rando::Context::GetInstance();
+    std::vector<ApForeignHint>* hintList = nullptr;
+    RandomizerHint rh = RH_NONE;
+    switch (msgCtx->textId) {
+        case TEXT_SKULLTULA_PEOPLE_IM_CURSED: {
+            RandomizerCheck tokenCheck = RC_UNKNOWN_CHECK;
+            if (actor->params == 1 && rndCtx->GetOption(RSK_KAK_10_SKULLS_HINT)) {
+                tokenCheck = RC_KAK_10_GOLD_SKULLTULA_REWARD;
+            } else if (actor->params == 2 && rndCtx->GetOption(RSK_KAK_20_SKULLS_HINT)) {
+                tokenCheck = RC_KAK_20_GOLD_SKULLTULA_REWARD;
+            } else if (actor->params == 3 && rndCtx->GetOption(RSK_KAK_30_SKULLS_HINT)) {
+                tokenCheck = RC_KAK_30_GOLD_SKULLTULA_REWARD;
+            } else if (actor->params == 4 && rndCtx->GetOption(RSK_KAK_40_SKULLS_HINT)) {
+                tokenCheck = RC_KAK_40_GOLD_SKULLTULA_REWARD;
+            } else if (rndCtx->GetOption(RSK_KAK_50_SKULLS_HINT)) {
+                tokenCheck = RC_KAK_50_GOLD_SKULLTULA_REWARD;
+            }
+            OpenLocalHint(tokenCheck);
+        } break;
+        case TEXT_SKULLTULA_PEOPLE_MAKE_YOU_VERY_RICH:
+            if (rndCtx->GetOption(RSK_KAK_100_SKULLS_HINT)) {
+                OpenLocalHint(RC_KAK_100_GOLD_SKULLTULA_REWARD);
+            }
+            break;
+        case TEXT_MASK_SHOP_SIGN:
+            if (rndCtx->GetOption(RSK_MASK_SHOP_HINT)) {
+                OpenLocalHint(RC_DEKU_THEATER_SKULL_MASK);
+                OpenLocalHint(RC_DEKU_THEATER_MASK_OF_TRUTH);
+            }
+            break;
+        case TEXT_GHOST_SHOP_CARD_HAS_POINTS:
+        case TEXT_GHOST_SHOP_EXPLAINATION:
+            if (rndCtx->GetOption(RSK_BIG_POES_HINT)) {
+                OpenLocalHint(RC_MARKET_10_BIG_POES);
+            }
+            break;
+        case TEXT_MALON_EVERYONE_TURNING_EVIL:
+        case TEXT_MALON_I_SING_THIS_SONG:
+        case TEXT_MALON_HOW_IS_EPONA_DOING:
+        case TEXT_MALON_OBSTICLE_COURSE:
+        case TEXT_MALON_INGO_MUST_HAVE_BEEN_TEMPTED:
+            if (rndCtx->GetOption(RSK_MALON_HINT)) {
+                OpenLocalHint(RC_KF_LINKS_HOUSE_COW);
+            }
+            break;
+        case TEXT_FROGS_UNDERWATER:
+            if (rndCtx->GetOption(RSK_FROGS_HINT)) {
+                OpenLocalHint(RC_ZR_FROGS_OCARINA_GAME);
+            }
+            break;
+        case TEXT_GF_HBA_SIGN:
+        case TEXT_HBA_NOT_ON_HORSE:
+        case TEXT_HBA_INITIAL_EXPLAINATION:
+        case TEXT_HBA_ALREADY_HAVE_1000:
+            if (rndCtx->GetOption(RSK_HBA_HINT)) {
+                OpenLocalHint(RC_GF_HBA_1000_POINTS);
+                OpenLocalHint(RC_GF_HBA_1500_POINTS);
+            }
+            break;
+        case TEXT_SCRUB_NO_WAY:
+        case TEXT_SCRUB_CANT_AFFORD:
+        case TEXT_SCRUB_CAPACITY_FULL:
+        case TEXT_SCRUB_CANT_GET:
+            if (rndCtx->GetOption(RSK_SCRUB_TEXT_HINT)) {
+                ScrubIdentity* checkIdentity = ObjectExtension::GetInstance().Get<ScrubIdentity>(actor);
+                if (checkIdentity != nullptr) {
+                    RandomizerCheck scrubCheck = OTRGlobals::Instance->gRandomizer->GetCheckFromRandomizerInf(
+                        checkIdentity->identity.randomizerInf);
+                    OpenLocalHint(scrubCheck);
+                }
+            }
+            break;
+        case TEXT_BEAN_SALESMAN_NOT_ENOUGH_MONEY:
+        case TEXT_BEAN_SALESMAN_OH_WELL:
+            if (rndCtx->GetOption(RSK_MERCHANT_TEXT_HINT) &&
+                (rndCtx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_BEANS_ONLY) ||
+                 rndCtx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_ALL))) {
+                OpenLocalHint(RC_ZR_MAGIC_BEAN_SALESMAN);
+            }
+            break;
+        case TEXT_GRANNYS_SHOP_CHANGE_YOUR_MIND:
+        case TEXT_GRANNYS_SHOP_CANT_AFFORD:
+            if (rndCtx->GetOption(RSK_MERCHANT_TEXT_HINT) &&
+                (rndCtx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_ALL_BUT_BEANS) ||
+                 rndCtx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_ALL))) {
+                if (rndCtx->GetOption(RSK_SHUFFLE_ADULT_TRADE) || INV_CONTENT(ITEM_CLAIM_CHECK) == ITEM_CLAIM_CHECK) {
+                    OpenLocalHint(RC_KAK_GRANNYS_SHOP);
+                }
+            }
+            break;
+        case TEXT_MEDIROGON_CANT_AFFORD:
+        case TEXT_MEDIGORON_DECLINE:
+            if (rndCtx->GetOption(RSK_MERCHANT_TEXT_HINT) &&
+                (rndCtx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_ALL_BUT_BEANS) ||
+                 rndCtx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_ALL))) {
+                OpenLocalHint(RC_GC_MEDIGORON);
+            }
+            break;
+        case TEXT_CARPET_SALESMAN_CUSTOM_FAIL_TO_BUY:
+        case TEXT_CARPET_SALESMAN_DECLINE:
+        case TEXT_CARPET_SALESMAN_CANT_AFFORD:
+            if (rndCtx->GetOption(RSK_MERCHANT_TEXT_HINT) &&
+                (rndCtx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_ALL_BUT_BEANS) ||
+                 rndCtx->GetOption(RSK_SHUFFLE_MERCHANTS).Is(RO_SHUFFLE_MERCHANTS_ALL))) {
+                OpenLocalHint(RC_WASTELAND_BOMBCHU_SALESMAN);
+            }
+            break;
+        case TEXT_BIGGORON_BETTER_AT_SMITHING:
+        case TEXT_BIGGORON_WAITING_FOR_YOU:
+        case TEXT_BIGGORON_RETURN_AFTER_A_FEW_DAYS:
+        case TEXT_BIGGORON_I_MAAAADE_THISSSS:
+            if (rndCtx->GetOption(RSK_BIGGORON_HINT)) {
+                OpenLocalHint(RC_DMT_TRADE_CLAIM_CHECK);
+            }
+            break;
+        case TEXT_SHEIK_NEED_HOOK:
+        case TEXT_SHEIK_HAVE_HOOK:
+            if (rndCtx->GetOption(RSK_OOT_HINT)) {
+                OpenLocalHint(RC_HF_OCARINA_OF_TIME_ITEM);
+                OpenLocalHint(RC_SONG_FROM_OCARINA_OF_TIME);
+            }
+            break;
+        case TEXT_FISHING_CLOUDY:
+        case TEXT_FISHING_TRY_ANOTHER_LURE:
+        case TEXT_FISHING_SECRETS:
+        case TEXT_FISHING_GOOD_FISHERMAN:
+        case TEXT_FISHING_DIFFERENT_POND:
+        case TEXT_FISHING_SCRATCHING:
+        case TEXT_FISHING_TRY_ANOTHER_LURE_WITH_SINKING_LURE:
+            if (rndCtx->GetOption(RSK_LOACH_HINT)) {
+                OpenLocalHint(RC_LH_HYRULE_LOACH);
+            }
+            break;
+    }
+
+    ArchipelagoConsole_SendMessage("Text box closed: %.4x", msgCtx->textId);
 }
 
 void ArchipelagoClient::OnDialogHook() {
@@ -595,14 +742,16 @@ void ArchipelagoClient::OnDialogHook() {
     // Here we can check for the right message and open up its associated hint
     MessageContext* msgCtx = &(gPlayState->msgCtx);
     Actor* actor = msgCtx->talkActor;
+    std::shared_ptr<Rando::Context> rndCtx = Rando::Context::GetInstance();
     std::vector<ApForeignHint>* hintList = nullptr;
     RandomizerHint rh = RH_NONE;
+    RandomizerCheck reveal = RC_UNKNOWN_CHECK;
     switch (msgCtx->textId) {
         case TEXT_GANONDORF:
             rh = RH_GANONDORF_HINT;
             break;
         case TEXT_SHEIK_NEED_HOOK:
-        case TEXT_SHEIK_HAVE_HOOK:        
+        case TEXT_SHEIK_HAVE_HOOK:
             rh = RH_SHEIK_HINT;
             break;
         case TEXT_DAMPES_DIARY:
@@ -675,8 +824,8 @@ void ArchipelagoClient::OnDialogHook() {
         return;
     }
 
-    for(const ApForeignHint& foreignHint : foreignHints[rh]){
-        apClient->CreateHints({foreignHint.locationId}, foreignHint.playerId, APClient::HINT_UNSPECIFIED);
+    for (const ApForeignHint& foreignHint : foreignHints[rh]) {
+        apClient->CreateHints({ foreignHint.locationId }, foreignHint.playerId, APClient::HINT_UNSPECIFIED);
     }
 }
 
@@ -834,8 +983,8 @@ RandomizerGet ArchipelagoClient::GetIceTrapItem() {
 std::string ArchipelagoClient::GetApItemHint(RandomizerCheck rc) {
     std::string item_name = gSaveContext.ship.quest.data.archipelago.locations[rc].itemName;
     std::string player_name = gSaveContext.ship.quest.data.archipelago.locations[rc].playerName;
-    if(!player_name.empty()) {
-        if(player_name.back() == 's') {
+    if (!player_name.empty()) {
+        if (player_name.back() == 's') {
             player_name += "' ";
         } else {
             player_name += "'s ";
@@ -848,8 +997,8 @@ std::string ArchipelagoClient::GetApLocationHint(RandomizerHint rh, uint8_t inde
     ApForeignHint hintData = foreignHints[rh][index];
     std::string location_name = hintData.locationName;
     std::string player_name = hintData.playerName;
-    if(!player_name.empty()) {
-        if(player_name.back() == 's') {
+    if (!player_name.empty()) {
+        if (player_name.back() == 's') {
             player_name += "' ";
         } else {
             player_name += "'s ";
@@ -918,7 +1067,7 @@ void LoadArchipelagoData() {
         SaveManager::Instance->LoadData("", json);
         std::vector<ArchipelagoClient::ApForeignHint> loadedHints;
         std::string d = json.dump();
-        for(auto foreignHintData : json["ForeignLocation"]) {
+        for (auto foreignHintData : json["ForeignLocation"]) {
             ArchipelagoClient::ApForeignHint hint;
             hint.locationId = foreignHintData["LocationId"];
             hint.playerId = foreignHintData["PlayerId"];
@@ -951,9 +1100,11 @@ void SaveArchipelagoData(SaveContext* saveContext, int sectionID, bool fullSave)
         });
 
     SaveManager::Instance->SaveArray("hints", RH_MAX, [&](size_t hintKey) {
-        const std::vector<ArchipelagoClient::ApForeignHint>& hints = ArchipelagoClient::GetInstance().foreignHints[(RandomizerHint)hintKey];
+        const std::vector<ArchipelagoClient::ApForeignHint>& hints =
+            ArchipelagoClient::GetInstance().foreignHints[(RandomizerHint)hintKey];
         SaveManager::Instance->SaveStruct("", [&]() {
-            SaveManager::Instance->SaveData("HintKey", Rando::StaticData::hintNames[(uint32_t)hintKey].GetEnglish(MF_CLEAN));
+            SaveManager::Instance->SaveData("HintKey",
+                                            Rando::StaticData::hintNames[(uint32_t)hintKey].GetEnglish(MF_CLEAN));
             SaveManager::Instance->SaveArray("ForeignLocation", hints.size(), [&](size_t i) {
                 SaveManager::Instance->SaveStruct("", [&]() {
                     SaveManager::Instance->SaveData("LocationId", hints[i].locationId);
@@ -1006,6 +1157,9 @@ void RegisterArchipelago() {
 
     COND_HOOK(GameInteractor::OnDialogMessage, IS_ARCHIPELAGO,
               []() { ArchipelagoClient::GetInstance().OnDialogHook(); });
+
+    COND_HOOK(GameInteractor::OnDialogClose, IS_ARCHIPELAGO,
+              []() { ArchipelagoClient::GetInstance().OnDialogCloseHook(); })
 }
 
 static RegisterShipInitFunc initFunc(RegisterArchipelago, { "IS_ARCHIPELAGO" });

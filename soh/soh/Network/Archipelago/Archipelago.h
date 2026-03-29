@@ -78,8 +78,9 @@ class ArchipelagoClient {
     void SendMessageToConsole(const std::string message);
     void Poll();
     void ResetQueue();
-    void OpenLocalHint(RandomizerCheck sohCheckId, bool important);
+    void OpenLocalHint(RandomizerCheck sohCheckId);
     void OnDialogHook();
+    void OnDialogCloseHook();
     
     bool slotMatch(const std::string& slotName, const std::string& roomHash);
 

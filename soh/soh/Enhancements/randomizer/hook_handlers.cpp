@@ -876,7 +876,6 @@ void RandomizerOnDialogMessageHandler() {
                     auto item1000_loc = ctx->GetItemLocation(RC_GF_HBA_1000_POINTS);
                     if (item1000_loc->GetCheckStatus() == RCSHOW_UNCHECKED) {
                         item1000_loc->SetCheckStatus(RCSHOW_IDENTIFIED);
-                        ArchipelagoClient::GetInstance().OpenLocalHint(RC_GF_HBA_1000_POINTS, false);
                     }
                     reveal = RC_GF_HBA_1500_POINTS;
                 }
@@ -950,7 +949,6 @@ void RandomizerOnDialogMessageHandler() {
         auto item_loc = ctx->GetItemLocation(reveal);
         if (item_loc->GetCheckStatus() == RCSHOW_UNCHECKED) {
             item_loc->SetCheckStatus(RCSHOW_IDENTIFIED);
-            ArchipelagoClient::GetInstance().OpenLocalHint(reveal, false);
         }
     }
 }

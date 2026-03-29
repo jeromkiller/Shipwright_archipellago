@@ -294,6 +294,10 @@ void GameInteractor_ExecuteOnDialogMessage() {
     GameInteractor::Instance->ExecuteHooks<GameInteractor::OnDialogMessage>();
 }
 
+void GameInteractor_ExecuteOnDialogClose() {
+    GameInteractor::Instance->ExecuteHooks<GameInteractor::OnDialogClose>();
+}
+
 void GameInteractor_ExecuteOnPresentTitleCard() {
     GameInteractor::Instance->ExecuteHooks<GameInteractor::OnPresentTitleCard>();
 }
