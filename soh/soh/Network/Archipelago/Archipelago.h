@@ -79,6 +79,7 @@ class ArchipelagoClient {
     void Poll();
     void ResetQueue();
     void OpenLocalHint(RandomizerCheck sohCheckId);
+    void OpenForeignHint(RandomizerHint randomizerHintId);
     void OnDialogHook();
     void OnDialogCloseHook();
     
