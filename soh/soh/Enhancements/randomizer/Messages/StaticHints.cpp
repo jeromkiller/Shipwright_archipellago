@@ -46,7 +46,8 @@ void BuildSheikMessage(uint16_t* textId, bool* loadFromMessageTable) {
     CustomMessage msg;
     switch (gPlayState->sceneNum) {
         case SCENE_TEMPLE_OF_TIME:
-            if (RAND_GET_OPTION(RSK_OOT_HINT) && !RAND_GET_ITEM_LOC(RC_SONG_FROM_OCARINA_OF_TIME)->HasObtained()) {
+            if (RAND_GET_OPTION(RSK_OOT_HINT) && (!RAND_GET_ITEM_LOC(RC_SONG_FROM_OCARINA_OF_TIME)->HasObtained() ||
+                                                   !RAND_GET_ITEM_LOC(RC_HF_OCARINA_OF_TIME_ITEM)->HasObtained())) {
                 msg = RAND_GET_HINT(RH_OOT_HINT)->GetHintMessage(MF_RAW);
             } else if (!CHECK_DUNGEON_ITEM(DUNGEON_KEY_BOSS, SCENE_GANONS_TOWER)) {
                 msg = CustomMessage(
