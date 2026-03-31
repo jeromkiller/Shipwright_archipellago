@@ -728,7 +728,7 @@ void ArchipelagoClient::OnDialogCloseHook() {
             break;
         case TEXT_SHEIK_NEED_HOOK:
         case TEXT_SHEIK_HAVE_HOOK:
-            switch(gPlayState->sceneNum) {
+            switch (gPlayState->sceneNum) {
                 case SCENE_TEMPLE_OF_TIME:
                     if (rndCtx->GetOption(RSK_OOT_HINT)) {
                         OpenLocalHint(RC_HF_OCARINA_OF_TIME_ITEM);
@@ -736,11 +736,11 @@ void ArchipelagoClient::OnDialogCloseHook() {
                     }
                     break;
                 case SCENE_INSIDE_GANONS_CASTLE:
-                    if (rndCtx->GetOption(RSK_SHEIK_LA_HINT)) {
+                    if (rndCtx->GetOption(RSK_SHEIK_LA_HINT) && INV_CONTENT(ITEM_ARROW_LIGHT) != ITEM_ARROW_LIGHT) {
                         OpenForeignHint(RH_SHEIK_HINT);
                     }
                     break;
-                }
+            }
             break;
         case TEXT_FISHING_CLOUDY:
         case TEXT_FISHING_TRY_ANOTHER_LURE:
@@ -754,21 +754,34 @@ void ArchipelagoClient::OnDialogCloseHook() {
             }
             break;
         case TEXT_GANONDORF:
-            OpenForeignHint(RH_GANONDORF_HINT);
+            if (rndCtx->GetOption(RSK_GANONDORF_HINT)) {
+                if (!CHECK_OWNED_EQUIP(EQUIP_TYPE_SWORD, EQUIP_INV_SWORD_MASTER) ||
+                    INV_CONTENT(ITEM_ARROW_LIGHT) == ITEM_ARROW_LIGHT) {
+                    OpenForeignHint(RH_GANONDORF_HINT);
+                }
+            }
             break;
         case TEXT_DAMPES_DIARY:
-            OpenForeignHint(RH_DAMPES_DIARY);
+            if (rndCtx->GetOption(RSK_DAMPES_DIARY_HINT)) {
+                OpenForeignHint(RH_DAMPES_DIARY);
+            }
             break;
         case TEXT_CHEST_GAME_PROCEED:
         case TEXT_CHEST_GAME_REAL_GAMBLER:
         case TEXT_CHEST_GAME_THANKS_A_LOT:
-            OpenForeignHint(RH_GREG_RUPEE);
+            if (rndCtx->GetOption(RSK_GREG_HINT)) {
+                OpenForeignHint(RH_GREG_RUPEE);
+            }
             break;
         case TEXT_ALTAR_CHILD:
-            OpenForeignHint(RH_ALTAR_CHILD);
+            if (rndCtx->GetOption(RSK_TOT_ALTAR_HINT)) {
+                OpenForeignHint(RH_ALTAR_CHILD);
+            }
             break;
         case TEXT_ALTAR_ADULT:
-            OpenForeignHint(RH_ALTAR_ADULT);
+            if (rndCtx->GetOption(RSK_TOT_ALTAR_HINT)) {
+                OpenForeignHint(RH_ALTAR_ADULT);
+            }
             break;
         case TEXT_SARIA_SFM:
         case TEXT_SARIAS_SONG_FACE_TO_FACE:
@@ -785,46 +798,51 @@ void ArchipelagoClient::OnDialogCloseHook() {
         case TEXT_SARIAS_SONG_GLAD_NOW:
         case TEXT_SARIAS_SONG_IMPRISON_GANONDORF:
         case TEXT_SARIAS_SONG_CHANNELING_POWER:
-            OpenForeignHint(RH_SARIA_HINT);
+            if (rndCtx->GetOption(RSK_SARIA_HINT)) {
+                OpenForeignHint(RH_SARIA_HINT);
+            }
             break;
         case TEXT_MIDO_SPEAK_TO_MIDO_FIRST_TIME:
         case TEXT_MIDO_SPEAK_TO_MIDO_AGAIN:
         case TEXT_MIDO_HOME_AFTER_ZELDAS_LETTER:
         case TEXT_MIDO_HOME_BEFORE_ZELDAS_LETTER:
-            OpenForeignHint(RH_MIDO_HINT);
+            if (rndCtx->GetOption(RSK_MIDO_HINT)) {
+                OpenForeignHint(RH_MIDO_HINT);
+            }
             break;
         case TEXT_FISHING_POND_START:
         case TEXT_FISHING_POND_START_MET:
-            OpenForeignHint(RH_FISHING_POLE);
+            if (rndCtx->GetOption(RSK_FISHING_POLE_HINT)) {
+                OpenForeignHint(RH_FISHING_POLE);
+            }
             break;
         case TEXT_NEED_SPECIAL_KEY: {
-            switch (gPlayState->sceneNum) {
-                case SCENE_FOREST_TEMPLE:
-                    OpenForeignHint(RH_FOREST_BOSS_KEY_HINT);
-                    break;
-                case SCENE_FIRE_TEMPLE:
-                    OpenForeignHint(RH_FIRE_BOSS_KEY_HINT);
-                    break;
-                case SCENE_WATER_TEMPLE:
-                    OpenForeignHint(RH_WATER_BOSS_KEY_HINT);
-                    break;
-                case SCENE_SHADOW_TEMPLE:
-                    OpenForeignHint(RH_SHADOW_BOSS_KEY_HINT);
-                    break;
-                case SCENE_SPIRIT_TEMPLE:
-                    OpenForeignHint(RH_SPIRIT_BOSS_KEY_HINT);
-                    break;
-                case SCENE_GANONS_TOWER:
-                    OpenForeignHint(RH_GANONS_BOSS_KEY_HINT);
-                    break;
+            if (rndCtx->GetOption(RSK_BOSS_KEY_HINT)) {
+                switch (gPlayState->sceneNum) {
+                    case SCENE_FOREST_TEMPLE:
+                        OpenForeignHint(RH_FOREST_BOSS_KEY_HINT);
+                        break;
+                    case SCENE_FIRE_TEMPLE:
+                        OpenForeignHint(RH_FIRE_BOSS_KEY_HINT);
+                        break;
+                    case SCENE_WATER_TEMPLE:
+                        OpenForeignHint(RH_WATER_BOSS_KEY_HINT);
+                        break;
+                    case SCENE_SHADOW_TEMPLE:
+                        OpenForeignHint(RH_SHADOW_BOSS_KEY_HINT);
+                        break;
+                    case SCENE_SPIRIT_TEMPLE:
+                        OpenForeignHint(RH_SPIRIT_BOSS_KEY_HINT);
+                        break;
+                    case SCENE_GANONS_TOWER:
+                        OpenForeignHint(RH_GANONS_BOSS_KEY_HINT);
+                        break;
+                }
             }
             break;
         }
     }
-
-    ArchipelagoConsole_SendMessage("Text box closed: %.4x", msgCtx->textId);
 }
-
 
 bool ArchipelagoClient::slotMatch(const std::string& slotName, const std::string& roomHash) {
     if (apClient == nullptr) {
