@@ -141,8 +141,7 @@ void BuildSkulltulaPeopleMessage(uint16_t* textId, bool* loadFromMessageTable) {
                                       "et j'aurai quelque chose à te donner! [[color]]([[1]])%w");
     Text itemName = item.GetName();
     RandomizerGet rg = item.GetRandomizerGet();
-    if (rg == RG_ARCHIPELAGO_ITEM_PROGRESSIVE || rg == RG_ARCHIPELAGO_ITEM_USEFUL ||
-            rg == RG_ARCHIPELAGO_ITEM_JUNK) { 
+    if (rg == RG_ARCHIPELAGO_ITEM_PROGRESSIVE || rg == RG_ARCHIPELAGO_ITEM_USEFUL || rg == RG_ARCHIPELAGO_ITEM_JUNK) {
         std::string apItemName = std::string(gSaveContext.ship.quest.data.archipelago.locations[rc].itemName);
         std::string apPlayerName = std::string(gSaveContext.ship.quest.data.archipelago.locations[rc].playerName);
         itemName = Text(apItemName + "(" + apPlayerName + ")");
@@ -164,13 +163,15 @@ void Build100SkullsHintMessage(uint16_t* textId, bool* loadFromMessageTable) {
                                       /*french*/
                                       "Yeaaarrgh! Je suis maudit!^Détruit encore %y100 Araignées de la Malédiction%w "
                                       "et j'aurai quelque chose à te donner! [[color]]([[1]])%w");
-    Rando::Item& item = Rando::StaticData::RetrieveItem(RAND_GET_ITEM_LOC(RC_KAK_100_GOLD_SKULLTULA_REWARD)->GetPlacedRandomizerGet());
+    Rando::Item& item =
+        Rando::StaticData::RetrieveItem(RAND_GET_ITEM_LOC(RC_KAK_100_GOLD_SKULLTULA_REWARD)->GetPlacedRandomizerGet());
     RandomizerGet rg = item.GetRandomizerGet();
     Text itemName = item.GetName();
-    if (rg == RG_ARCHIPELAGO_ITEM_PROGRESSIVE || rg == RG_ARCHIPELAGO_ITEM_USEFUL ||
-            rg == RG_ARCHIPELAGO_ITEM_JUNK) { 
-        std::string apItemName = std::string(gSaveContext.ship.quest.data.archipelago.locations[RC_KAK_100_GOLD_SKULLTULA_REWARD].itemName);
-        std::string apPlayerName = std::string(gSaveContext.ship.quest.data.archipelago.locations[RC_KAK_100_GOLD_SKULLTULA_REWARD].playerName);
+    if (rg == RG_ARCHIPELAGO_ITEM_PROGRESSIVE || rg == RG_ARCHIPELAGO_ITEM_USEFUL || rg == RG_ARCHIPELAGO_ITEM_JUNK) {
+        std::string apItemName =
+            std::string(gSaveContext.ship.quest.data.archipelago.locations[RC_KAK_100_GOLD_SKULLTULA_REWARD].itemName);
+        std::string apPlayerName = std::string(
+            gSaveContext.ship.quest.data.archipelago.locations[RC_KAK_100_GOLD_SKULLTULA_REWARD].playerName);
         itemName = Text(apItemName + "(" + apPlayerName + ")");
     }
     msg.Replace("[[color]]", item.GetColor());
