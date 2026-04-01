@@ -598,6 +598,10 @@ void ArchipelagoClient::OpenForeignHint(RandomizerHint randomizerHintId) {
 
     APClient::HintStatus hintStatus = APClient::HINT_UNSPECIFIED;
     for (const ApForeignHint& foreignHint : foreignHints[randomizerHintId]) {
+        if (foreignHint.playerId == apClient->get_player_number() &&
+            foreignHint.locationName == Rando::StaticData::GetLocation(RC_LINKS_POCKET)->GetName()) {
+            continue;
+        }
         apClient->CreateHints({ foreignHint.locationId }, foreignHint.playerId, hintStatus);
     }
 }
