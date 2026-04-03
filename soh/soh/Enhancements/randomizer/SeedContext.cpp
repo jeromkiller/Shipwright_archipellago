@@ -653,7 +653,8 @@ void Context::ParseArchipelagoOptions() {
     mOptions[RSK_BOSS_KEY_HINT].Set(slotData["boss_key_hint"]);
     mOptions[RSK_DAMPES_DIARY_HINT].Set(slotData["dampe_diary_hint"]);
     mOptions[RSK_GREG_HINT].Set(slotData["greg_hint"]);
-    mOptions[RSK_LOACH_HINT].Set(slotData["hyrule_loach_hint"]);
+    // Loach not currently enabled in AP
+    mOptions[RSK_LOACH_HINT].Set(RO_GENERIC_OFF);//slotData["hyrule_loach_hint"]);
     mOptions[RSK_SARIA_HINT].Set(slotData["saria_hint"]);
     mOptions[RSK_MIDO_HINT].Set(slotData["mido_hint"]);
     mOptions[RSK_FROGS_HINT].Set(slotData["frog_game_hint"]);

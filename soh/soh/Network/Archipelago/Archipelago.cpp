@@ -570,6 +570,7 @@ void ArchipelagoClient::OpenLocalHint(RandomizerCheck sohCheckId) {
         return;
     }
 
+    // Todo: Add option to toggle filler hints on or off
     Rando::Item item = itemLoc->GetPlacedItem();
     if (item.GetCategory() == ITEM_CATEGORY_JUNK) {
         return;
@@ -580,10 +581,8 @@ void ArchipelagoClient::OpenLocalHint(RandomizerCheck sohCheckId) {
         return;
     }
 
-    APClient::HintStatus hintStatus = APClient::HINT_UNSPECIFIED;
-
     int64_t apItemId = apClient->get_location_id(std::string(apName));
-    apClient->CreateHints({ apItemId }, -1, hintStatus);
+    apClient->CreateHints({ apItemId }, -1);
 }
 
 void ArchipelagoClient::OpenForeignHint(RandomizerHint randomizerHintId) {
@@ -596,13 +595,12 @@ void ArchipelagoClient::OpenForeignHint(RandomizerHint randomizerHintId) {
         return;
     }
 
-    APClient::HintStatus hintStatus = APClient::HINT_UNSPECIFIED;
     for (const ApForeignHint& foreignHint : foreignHints[randomizerHintId]) {
         if (foreignHint.playerId == apClient->get_player_number() &&
             foreignHint.locationName == Rando::StaticData::GetLocation(RC_LINKS_POCKET)->GetName()) {
             continue;
         }
-        apClient->CreateHints({ foreignHint.locationId }, foreignHint.playerId, hintStatus);
+        apClient->CreateHints({ foreignHint.locationId }, foreignHint.playerId);
     }
 }
 
@@ -760,7 +758,7 @@ void ArchipelagoClient::OnDialogCloseHook() {
         case TEXT_GANONDORF:
             if (rndCtx->GetOption(RSK_GANONDORF_HINT)) {
                 if (!CHECK_OWNED_EQUIP(EQUIP_TYPE_SWORD, EQUIP_INV_SWORD_MASTER) ||
-                    INV_CONTENT(ITEM_ARROW_LIGHT) == ITEM_ARROW_LIGHT) {
+                    INV_CONTENT(ITEM_ARROW_LIGHT) != ITEM_ARROW_LIGHT) {
                     OpenForeignHint(RH_GANONDORF_HINT);
                 }
             }
@@ -788,20 +786,7 @@ void ArchipelagoClient::OnDialogCloseHook() {
             }
             break;
         case TEXT_SARIA_SFM:
-        case TEXT_SARIAS_SONG_FACE_TO_FACE:
-        case TEXT_SARIAS_SONG_FOREST_SOUNDS:
-        case TEXT_SARIAS_SONG_MR_DARUNIA:
-        case TEXT_SARIAS_SONG_SPIRITUAL_WATER:
-        case TEXT_SARIAS_SONG_SPIRITUAL_FIRE:
-        case TEXT_SARIAS_SONG_DREAD_CASTLE:
-        case TEXT_SARIAS_SONG_DIFFERENT_OCARINA:
-        case TEXT_SARIAS_SONG_EYES_DARKNESS_STORM:
-        case TEXT_SARIAS_SONG_DESERT_GODDESS:
-        case TEXT_SARIAS_SONG_TEMPLES:
-        case TEXT_SARIAS_SONG_FOREST_TEMPLE:
-        case TEXT_SARIAS_SONG_GLAD_NOW:
-        case TEXT_SARIAS_SONG_IMPRISON_GANONDORF:
-        case TEXT_SARIAS_SONG_CHANNELING_POWER:
+        case TEXT_SARIAS_SONG_TALK_SARIA_AGAIN:
             if (rndCtx->GetOption(RSK_SARIA_HINT)) {
                 OpenForeignHint(RH_SARIA_HINT);
             }
