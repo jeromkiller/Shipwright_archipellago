@@ -16,6 +16,7 @@
 #include <utility>
 
 #include "soh/Network/Archipelago/ArchipelagoConsoleWindow.h"
+#include "soh/Network/Archipelago/ArchipelagoHintWindow.h"
 #include "soh/Enhancements/randomizer/randomizerTypes.h"
 #include "soh/Enhancements/randomizer/static_data.h"
 #include "soh/Enhancements/randomizer/SeedContext.h"
@@ -148,6 +149,12 @@ bool ArchipelagoClient::StartClient() {
             SynchSentLocations();
             SynchReceivedLocations();
         }
+
+        const int team_number = apClient->get_team_number();
+        const int player_id = apClient->get_player_number();
+        std::list<std::string> hintNotificationKeys = {std::format("_read_hints_{}_{}", team_number, player_id)};
+        apClient->SetNotify(hintNotificationKeys);
+        apClient->Get(hintNotificationKeys);
     });
 
     apClient->set_slot_refused_handler([&](const std::list<std::string>& msgs) {
@@ -296,6 +303,26 @@ bool ArchipelagoClient::StartClient() {
                     isDeathLinkedDeath = true;
                 }
             }
+        }
+    });
+
+    apClient->set_set_reply_handler([&](const nlohmann::json data) {
+        const int team_number = apClient->get_team_number();
+        const int player_number = apClient->get_player_number();
+        std::string hint_key = std::format("_read_hints_{}_{}", team_number, player_number);
+        if (data["key"] == hint_key) {
+            UpdateHints(data["value"]);
+            return;
+        }
+    });
+
+    apClient->set_retrieved_handler([&](const std::map<std::string, nlohmann::json>& data) {
+        const int team_number = apClient->get_team_number();
+        const int player_number = apClient->get_player_number();
+        std::string hint_key = std::format("_read_hints_{}_{}", team_number, player_number);
+        if (data.contains(hint_key)) {
+            UpdateHints(data.at(hint_key));
+            return;
         }
     });
 
@@ -523,6 +550,47 @@ void ArchipelagoClient::SendMessageToConsole(const std::string message) {
     }
 
     apClient->Say(message);
+}
+
+void ArchipelagoClient::UpdateHints(const std::vector<nlohmann::json>& hints_json) {
+    // update the hint table
+    std::vector<AP_Hint::Hint> new_hints;
+    const int player_number = apClient->get_player_number();
+    for (const nlohmann::json& hint_data : hints_json) {
+        AP_Hint::Hint new_hint;
+        const int receiving_player_id = hint_data["receiving_player"];
+        const int finding_player_id = hint_data["finding_player"];
+        new_hint.index = new_hints.size();
+        new_hint.receiving_player_name = apClient->get_player_alias(receiving_player_id);
+        new_hint.finding_player_name = apClient->get_player_alias(finding_player_id);
+        new_hint.location_name = apClient->get_location_name(hint_data["location"], apClient->get_player_game(finding_player_id));
+        new_hint.item_name = apClient->get_item_name(hint_data["item"], apClient->get_player_game(finding_player_id));
+        new_hint.entrance_name = hint_data["entrance"];
+        new_hint.item_flags = hint_data["item_flags"];
+        new_hint.found = hint_data["found"];
+        new_hint.we_receive = player_number == receiving_player_id;
+        new_hint.we_find = player_number == finding_player_id;
+        switch (static_cast<int>(hint_data["status"])) {
+            case APClient::HINT_NO_PRIORITY:
+                new_hint.hint_status = AP_Hint::HintStatus::NO_PRIORITY;
+                break;
+            case APClient::HINT_AVOID:
+                new_hint.hint_status = AP_Hint::HintStatus::AVOID;
+                break;
+            case APClient::HINT_PRIORITY:
+                new_hint.hint_status = AP_Hint::HintStatus::PRIORITY;
+                break;
+            case APClient::HINT_FOUND:
+                new_hint.hint_status = AP_Hint::HintStatus::FOUND;
+                break;
+            case APClient::HINT_UNSPECIFIED:
+            default:
+                new_hint.hint_status = AP_Hint::HintStatus::UNSPECIFIED;
+                break;
+        }
+        new_hints.push_back(new_hint);
+    }
+    ArchipelagoHintWindow_UpdateHints(new_hints);
 }
 
 void ArchipelagoClient::Poll() {

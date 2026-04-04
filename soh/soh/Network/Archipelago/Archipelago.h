@@ -76,6 +76,7 @@ class ArchipelagoClient {
 
     void SendGameWon();
     void SendMessageToConsole(const std::string message);
+    void UpdateHints(const std::vector<nlohmann::json>& hints_json);
     void Poll();
     void ResetQueue();
     void OpenLocalHint(RandomizerCheck sohCheckId);
