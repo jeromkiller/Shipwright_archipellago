@@ -617,6 +617,14 @@ void ArchipelagoClient::OnDialogCloseHook() {
     std::vector<ApForeignHint>* hintList = nullptr;
     RandomizerHint rh = RH_NONE;
     switch (msgCtx->textId) {
+        case TEXT_ANJU_PLEASE_BRING_MY_CUCCOS_BACK:
+        case TEXT_ANJU_PLEASE_BRING_4_CUCCOS:
+        case TEXT_ANJU_PLEASE_BRING_3_CUCCOS:
+        case TEXT_ANJU_PLEASE_BRING_2_CUCCOS:
+        case TEXT_ANJU_PLEASE_BRING_1_CUCCO: {
+            OpenLocalHint(RC_KAK_ANJU_AS_CHILD);
+            break;
+        }
         case TEXT_SKULLTULA_PEOPLE_IM_CURSED: {
             RandomizerCheck tokenCheck = RC_UNKNOWN_CHECK;
             if (actor->params == 1 && rndCtx->GetOption(RSK_KAK_10_SKULLS_HINT)) {
