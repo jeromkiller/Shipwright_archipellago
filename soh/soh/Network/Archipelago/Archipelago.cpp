@@ -71,6 +71,8 @@ bool ArchipelagoClient::StartClient() {
             ArchipelagoConsole_SendMessage("[ERROR] Could not connect to server after several tries.\nAre the entered "
                                            "server address and port correct?");
             CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 2); // Connection error
+            CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusInGame"), 0);
+
             disconnecting = true;
 
             if (GameInteractor::IsSaveLoaded) {
@@ -511,6 +513,8 @@ void ArchipelagoClient::Poll() {
         ResetQueue();
         disconnecting = false;
         CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 0); // disconnected
+        CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusInGame"), 0);
+
         return;
     }
 
@@ -708,6 +712,11 @@ extern "C" void Archipelago_InitSaveFile() {
                                         scoutedItems[i].playerName,
                                         ARRAY_COUNT(gSaveContext.ship.quest.data.archipelago.locations[rc].playerName));
     }
+}
+
+extern "C" bool Archipelago_InitConnection() {
+    ArchipelagoClient& client = ArchipelagoClient::GetInstance();
+    return client.StartClient();
 }
 
 void LoadArchipelagoData() {

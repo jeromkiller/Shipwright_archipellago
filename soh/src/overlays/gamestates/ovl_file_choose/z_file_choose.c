@@ -24,6 +24,7 @@
 #include "soh/OTRGlobals.h"
 #include "soh/ResourceManagerHelpers.h"
 #include "soh/ShipUtils.h"
+#include "soh/Network/Archipelago/Archipelago.h"
 
 #define MIN_QUEST (ResourceMgr_GameHasOriginal() ? QUEST_NORMAL : QUEST_MASTER)
 #define MAX_QUEST QUEST_ARCHIPELAGO
@@ -995,6 +996,7 @@ void FileChoose_UpdateArchipelagoMenu(GameState* thisx) {
     Input* input = &this->state.input[0];
     bool dpad = CVarGetInteger(CVAR_SETTING("DpadInText"), 0);
 
+
     // Fade in elements after opening Archipelago Options menu
     this->archipelagoUIAlpha += 25;
     if (this->archipelagoUIAlpha > 255) {
@@ -1026,14 +1028,25 @@ void FileChoose_UpdateArchipelagoMenu(GameState* thisx) {
         return;
     }
 
-    if (CHECK_BTN_ALL(input->press.button, BTN_A)) {
-        if (this->archipelagoIndex == ASM_START_ARCHIPELAGO) {
-            // Only continue when connected to a slot and locations are scouted.
-            if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 0) != 4) {
-                Audio_PlaySoundGeneral(NA_SE_SY_FSEL_ERROR, &gSfxDefaultPos, 4, &gSfxDefaultFreqAndVolScale,
-                                       &gSfxDefaultFreqAndVolScale, &gSfxDefaultReverb);
+    if (CHECK_BTN_ALL(input->press.button, BTN_A) || CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusInGame"), 0) == 1) {
+        if (this->archipelagoIndex == ASM_START_ARCHIPELAGO || CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusInGame"), 0) == 1) {
+            if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 0) != 4 && CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusInGame"), 0) == 1) {
                 return;
             }
+            // If not connected, try to connect.
+            if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 0) != 4) {
+                if (CVarGetString(CVAR_REMOTE_ARCHIPELAGO("SlotName"), "") != "" && CVarGetString(CVAR_REMOTE_ARCHIPELAGO("ServerAddress"), "") != ""){
+                    Archipelago_InitConnection();
+                    CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusInGame"), 1);
+                } else {
+                    Audio_PlaySoundGeneral(NA_SE_SY_FSEL_ERROR, &gSfxDefaultPos, 4, &gSfxDefaultFreqAndVolScale,
+                                    &gSfxDefaultFreqAndVolScale, &gSfxDefaultReverb);
+                }
+                return;
+            }
+
+            CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusInGame"), 0);
+            
             SohFileSelect_ShowPresetModal();
             Audio_PlaySoundGeneral(NA_SE_SY_FSEL_DECIDE_L, &gSfxDefaultPos, 4, &gSfxDefaultFreqAndVolScale,
                                    &gSfxDefaultFreqAndVolScale, &gSfxDefaultReverb);
@@ -1083,6 +1096,7 @@ void FileChoose_UpdateArchipelagoMenu(GameState* thisx) {
 
 void FileChoose_StartArchipelagoMenu(GameState* thisx) {
     FileChooseContext* this = (FileChooseContext*)thisx;
+    CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusInGame"), 0);
 
     this->logoAlpha -= 25;
     this->archipelagoUIAlpha = 0;
