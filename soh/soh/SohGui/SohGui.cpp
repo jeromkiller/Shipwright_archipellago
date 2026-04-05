@@ -210,7 +210,7 @@ void SetupGuiElements() {
                                                                            "Archipelago Console", ImVec2(600, 550));
     gui->AddGuiWindow(mArchipelagoConsoleWindow);
     mArchipelagoHintWindow = std::make_shared<ArchipelagoHintWindow>(CVAR_WINDOW("ArchipelagoHintWindow"),
-                                                                     "Archipelago Hints", ImVec2(300, 550));
+                                                                     "Archipelago Hints", ImVec2(300, 200));
     gui->AddGuiWindow(mArchipelagoHintWindow);
     mNotificationWindow = std::make_shared<Notification::Window>(CVAR_WINDOW("Notifications"), "Notifications Window");
     gui->AddGuiWindow(mNotificationWindow);
