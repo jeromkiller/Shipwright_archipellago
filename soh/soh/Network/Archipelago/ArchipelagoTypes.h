@@ -74,6 +74,8 @@ namespace AP_Hint {
         std::string entrance_name;
         HintStatus hint_status;
         int item_flags;
+        int finding_player_id;
+        int location_id;
         bool found;
         bool we_find;
         bool we_receive;

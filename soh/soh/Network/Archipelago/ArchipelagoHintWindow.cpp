@@ -4,6 +4,7 @@
 #include "soh/SohGui/SohGui.hpp"
 #include "soh/OTRGlobals.h"
 #include "ArchipelagoTypes.h"
+#include "Archipelago.h"
 #include <apclient.hpp>
 
 std::vector<AP_Hint::Hint> HintList;
@@ -90,26 +91,65 @@ void ArchipelagoHintWindow::addEntrance(const AP_Hint::Hint& hint) {
 
 void ArchipelagoHintWindow::addStatus(const AP_Hint::Hint& hint) {
     ImGui::TableNextColumn();
-    AP_Text::TextColor color = AP_Text::TextColor::COLOR_DEFAULT;
-    switch (hint.hint_status) {
-        case AP_Hint::HintStatus::FOUND:
-            color = AP_Text::TextColor::COLOR_GREEN;
-            break;
-        case AP_Hint::HintStatus::NO_PRIORITY:
-            color = AP_Text::TextColor::COLOR_CYAN;
-            break;
-        case AP_Hint::HintStatus::AVOID:
-            color = AP_Text::TextColor::COLOR_SALMON;
-            break;
-        case AP_Hint::HintStatus::PRIORITY:
-            color = AP_Text::TextColor::COLOR_PLUM;
-            break;
-    }
+    ImGui::PushItemWidth(-FLT_MIN);
+    AP_Text::TextColor color = getStatusColor(hint.hint_status);
     ImGui::PushStyleColor(ImGuiCol_Text, AP_Text::colorVec[color]);
-    ImGui::TextWrapped("%s", AP_Hint::statusStrings[hint.hint_status].c_str());
+    if (hint.found || !hint.we_receive) {
+        ImGui::TextWrapped("%s", AP_Hint::statusStrings[hint.hint_status].c_str());
+    } else {
+        addStatusCombo(hint);
+    }
+
+    ImGui::PopItemWidth();
     ImGui::PopStyleColor();
 }
 
+void ArchipelagoHintWindow::addStatusCombo(const AP_Hint::Hint& hint) {
+    const std::array<AP_Hint::HintStatus, 3> drop_down_statuses = {AP_Hint::HintStatus::AVOID, AP_Hint::HintStatus::NO_PRIORITY, AP_Hint::HintStatus::PRIORITY};
+
+        // set up combo box style
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0, 0.0, 0.0, 0.0));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(1.0, 1.0, 1.0, 0.1));
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0, 0.0, 0.0, 0.0));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0, 1.0, 1.0, 0.1));
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(1.0, 1.0, 1.0, 0.1));
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(1.0, 1.0, 1.0, 0.2));
+
+        if (ImGui::BeginCombo("", AP_Hint::statusStrings[hint.hint_status].c_str(), 0)) {
+            for (const AP_Hint::HintStatus status : drop_down_statuses) {
+                ImGui::PushStyleColor(ImGuiCol_Text, AP_Text::colorVec[getStatusColor(status)]);
+                const bool is_selected = hint.hint_status == status;
+                if (ImGui::Selectable(AP_Hint::statusStrings[status].c_str(), is_selected)) {
+                    // update hint status
+                    ArchipelagoClient::GetInstance().UpdateHintStatus(hint.finding_player_id, hint.location_id, status);
+                }
+
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus();
+
+                ImGui::PopStyleColor();
+            }
+            
+            ImGui::EndCombo();
+        }
+        ImGui::PopStyleColor(6);
+}
+
+AP_Text::TextColor ArchipelagoHintWindow::getStatusColor(const AP_Hint::HintStatus status) const {
+    switch (status) {
+        case AP_Hint::HintStatus::FOUND:
+            return AP_Text::TextColor::COLOR_GREEN;
+        case AP_Hint::HintStatus::NO_PRIORITY:
+            return AP_Text::TextColor::COLOR_CYAN;
+        case AP_Hint::HintStatus::AVOID:
+            return AP_Text::TextColor::COLOR_SALMON;
+        case AP_Hint::HintStatus::PRIORITY:
+            return AP_Text::TextColor::COLOR_PLUM;
+        case AP_Hint::HintStatus::UNSPECIFIED:
+            return AP_Text::TextColor::COLOR_DEFAULT;
+    }
+    return AP_Text::TextColor::COLOR_ERROR;
+}
 
 void ArchipelagoHintWindow_UpdateHints(std::vector<AP_Hint::Hint>& new_hints) {
     HintList.swap(new_hints);

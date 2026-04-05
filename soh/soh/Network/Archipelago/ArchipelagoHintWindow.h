@@ -23,6 +23,8 @@ class ArchipelagoHintWindow final : public Ship::GuiWindow {
     void addLocation(const AP_Hint::Hint& hint);
     void addEntrance(const AP_Hint::Hint& hint);
     void addStatus(const AP_Hint::Hint& hint);
+    void addStatusCombo(const AP_Hint::Hint& hint);
+    AP_Text::TextColor getStatusColor(const AP_Hint::HintStatus status) const;
 };
 
 void ArchipelagoHintWindow_UpdateHints(std::vector<AP_Hint::Hint>& new_hints);

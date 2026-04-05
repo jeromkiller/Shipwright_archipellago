@@ -66,6 +66,7 @@ class ArchipelagoClient {
     std::string GetApLocationHint(RandomizerHint rh, uint8_t index);
     const nlohmann::json GetSlotData();
     const std::vector<ApItem>& GetScoutedItems();
+    void UpdateHintStatus(int player, int location, AP_Hint::HintStatus status);
 
     bool IsConnected();
     void CheckLocation(RandomizerCheck sohCheckId);

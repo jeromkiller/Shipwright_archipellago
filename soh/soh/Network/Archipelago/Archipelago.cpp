@@ -568,6 +568,8 @@ void ArchipelagoClient::UpdateHints(const std::vector<nlohmann::json>& hints_jso
         new_hint.entrance_name = hint_data["entrance"];
         new_hint.item_flags = hint_data["item_flags"];
         new_hint.found = hint_data["found"];
+        new_hint.finding_player_id = finding_player_id;
+        new_hint.location_id = hint_data["location"];
         new_hint.we_receive = player_number == receiving_player_id;
         new_hint.we_find = player_number == finding_player_id;
         switch (static_cast<int>(hint_data["status"])) {
@@ -604,6 +606,8 @@ void ArchipelagoClient::Poll() {
         ResetQueue();
         disconnecting = false;
         CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 0); // disconnected
+        std::vector<AP_Hint::Hint> empty_hints = {};
+        ArchipelagoHintWindow_UpdateHints(empty_hints);
         return;
     }
 
@@ -962,6 +966,33 @@ const nlohmann::json ArchipelagoClient::GetSlotData() {
 
 const std::vector<ArchipelagoClient::ApItem>& ArchipelagoClient::GetScoutedItems() {
     return scoutedItems;
+}
+
+void ArchipelagoClient::UpdateHintStatus(int player, int location, AP_Hint::HintStatus status) {
+    if (!IsConnected()) {
+        return;
+    }
+
+    APClient::HintStatus ap_status = APClient::HINT_UNSPECIFIED;
+    switch (status) {
+        case AP_Hint::HintStatus::AVOID:
+            ap_status = APClient::HINT_AVOID;
+            break;
+        case AP_Hint::HintStatus::FOUND:
+            ap_status = APClient::HINT_FOUND;
+            break;
+        case AP_Hint::HintStatus::NO_PRIORITY:
+            ap_status = APClient::HINT_NO_PRIORITY;
+            break;
+        case AP_Hint::HintStatus::PRIORITY:
+            ap_status = APClient::HINT_PRIORITY;
+            break;
+        case AP_Hint::HintStatus::UNSPECIFIED:
+            ap_status = APClient::HINT_UNSPECIFIED;
+            break;
+    }
+
+    apClient->UpdateHint(player, location, ap_status);
 }
 
 uint8_t ArchipelagoClient::GetConnectionStatus() {
