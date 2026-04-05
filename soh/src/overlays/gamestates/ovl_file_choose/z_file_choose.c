@@ -1034,6 +1034,11 @@ void FileChoose_UpdateArchipelagoMenu(GameState* thisx) {
                                        &gSfxDefaultFreqAndVolScale, &gSfxDefaultReverb);
                 return;
             }
+
+            // Reset Fade Status before getting in game
+            CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeStarted"), 0);
+            CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"), 255);
+            
             SohFileSelect_ShowPresetModal();
             Audio_PlaySoundGeneral(NA_SE_SY_FSEL_DECIDE_L, &gSfxDefaultPos, 4, &gSfxDefaultFreqAndVolScale,
                                    &gSfxDefaultFreqAndVolScale, &gSfxDefaultReverb);

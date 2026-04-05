@@ -13,6 +13,9 @@ void BootCommands_Init() {
     CVarClear(CVAR_GENERAL("BetterDebugWarpScreenMQModeScene"));
 
     CVarClear(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus")); // Clear on boot to reset connection status
+    CVarClear(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeStarted"));
+    CVarClear(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"));
+    
 #if defined(__SWITCH__) || defined(__WIIU__)
     CVarRegisterInteger(CVAR_IMGUI_CONTROLLER_NAV, 1); // always enable controller nav on switch/wii u
 #endif
