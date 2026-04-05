@@ -26,6 +26,7 @@ void ArchipelagoHintWindow::DrawElement() {
 
     if (ImGui::BeginTable("archipelago_hint_table", 5, flags)) {
         // headers
+        ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableSetupColumn("Receiving Player", 0, 0.0f, HintTableColumns::COL_RECIEVING);
         ImGui::TableSetupColumn("Item", 0, 0.0f, HintTableColumns::COL_ITEM);
         ImGui::TableSetupColumn("Finding Player", 0, 0.0f, HintTableColumns::COL_FINDING);
@@ -36,14 +37,19 @@ void ArchipelagoHintWindow::DrawElement() {
         sortHints(ImGui::TableGetSortSpecs());
 
         // content
-        for (const AP_Hint::Hint& hint : HintList) {
-            ImGui::PushID(static_cast<int>(hint.index));
-            addName(hint.receiving_player_name, hint.we_receive);
-            addItem(hint);
-            addName(hint.finding_player_name, hint.we_find);
-            addLocation(hint);
-            addStatus(hint);
-            ImGui::PopID();
+        ImGuiListClipper clipper;
+        clipper.Begin(HintList.size());
+        while (clipper.Step()) {
+            for (int row_n = clipper.DisplayStart; row_n < clipper.DisplayEnd; row_n++) {
+                const auto& hint = HintList[row_n];
+                ImGui::PushID(static_cast<int>(hint.index));
+                addName(hint.receiving_player_name, hint.we_receive);
+                addItem(hint);
+                addName(hint.finding_player_name, hint.we_find);
+                addLocation(hint);
+                addStatus(hint);
+                ImGui::PopID();
+            }
         }
 
         ImGui::EndTable();
