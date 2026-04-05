@@ -20,21 +20,24 @@ void ArchipelagoHintWindow::DrawElement() {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15.0f, 12.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 1.0f));
 
-    static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_Sortable |
-                                          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter |
-                                          ImGuiTableFlags_BordersV | ImGuiTableFlags_NoBordersInBody |
-                                          ImGuiTableFlags_ScrollY;
+    static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_Sortable | ImGuiTableFlags_SortMulti |
+                                   ImGuiTableFlags_SortTristate | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter |
+                                   ImGuiTableFlags_BordersV | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollY;
+
     if (ImGui::BeginTable("archipelago_hint_table", 5, flags)) {
         // headers
-        ImGui::TableSetupColumn("Receiving Player");
-        ImGui::TableSetupColumn("Item");
-        ImGui::TableSetupColumn("Finding Player");
-        ImGui::TableSetupColumn("Location");
-        ImGui::TableSetupColumn("Status", ImGuiTableColumnFlags_DefaultSort);
+        ImGui::TableSetupColumn("Receiving Player", 0, 0.0f, HintTableColumns::COL_RECIEVING);
+        ImGui::TableSetupColumn("Item", 0, 0.0f, HintTableColumns::COL_ITEM);
+        ImGui::TableSetupColumn("Finding Player", 0, 0.0f, HintTableColumns::COL_FINDING);
+        ImGui::TableSetupColumn("Location", 0, 0.0f, HintTableColumns::COL_LOCATION);
+        ImGui::TableSetupColumn("Status", 0, 0.0f, HintTableColumns::COL_STATUS);
         ImGui::TableHeadersRow();
 
+        sortHints(ImGui::TableGetSortSpecs());
+
+        // content
         for (const AP_Hint::Hint& hint : HintList) {
-            ImGui::PushID(hint.index);
+            ImGui::PushID(static_cast<int>(hint.index));
             addName(hint.receiving_player_name, hint.we_receive);
             addItem(hint);
             addName(hint.finding_player_name, hint.we_find);
@@ -70,7 +73,7 @@ void ArchipelagoHintWindow::addItem(const AP_Hint::Hint& hint) {
         color = AP_Text::TextColor::COLOR_SLATEBLUE;
     else if (hint.item_flags & APClient::ItemFlags::FLAG_TRAP)
         color = AP_Text::TextColor::COLOR_SALMON;
-    ImGui::PushStyleColor(ImGuiCol_Text, AP_Text::colorVec[color]);    // todo find out color based on flags
+    ImGui::PushStyleColor(ImGuiCol_Text, AP_Text::colorVec[color]);
     ImGui::TextWrapped("%s", hint.item_name.c_str());
     ImGui::PopStyleColor();
 }
@@ -105,34 +108,36 @@ void ArchipelagoHintWindow::addStatus(const AP_Hint::Hint& hint) {
 }
 
 void ArchipelagoHintWindow::addStatusCombo(const AP_Hint::Hint& hint) {
-    const std::array<AP_Hint::HintStatus, 3> drop_down_statuses = {AP_Hint::HintStatus::AVOID, AP_Hint::HintStatus::NO_PRIORITY, AP_Hint::HintStatus::PRIORITY};
+    const std::array<AP_Hint::HintStatus, 3> drop_down_statuses = { AP_Hint::HintStatus::AVOID,
+                                                                    AP_Hint::HintStatus::NO_PRIORITY,
+                                                                    AP_Hint::HintStatus::PRIORITY };
 
-        // set up combo box style
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0, 0.0, 0.0, 0.0));
-        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(1.0, 1.0, 1.0, 0.1));
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0, 0.0, 0.0, 0.0));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0, 1.0, 1.0, 0.1));
-        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(1.0, 1.0, 1.0, 0.1));
-        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(1.0, 1.0, 1.0, 0.2));
+    // set up combo box style
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0, 0.0, 0.0, 0.0));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(1.0, 1.0, 1.0, 0.1));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0, 0.0, 0.0, 0.0));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0, 1.0, 1.0, 0.1));
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(1.0, 1.0, 1.0, 0.1));
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(1.0, 1.0, 1.0, 0.2));
 
-        if (ImGui::BeginCombo("", AP_Hint::statusStrings[hint.hint_status].c_str(), 0)) {
-            for (const AP_Hint::HintStatus status : drop_down_statuses) {
-                ImGui::PushStyleColor(ImGuiCol_Text, AP_Text::colorVec[getStatusColor(status)]);
-                const bool is_selected = hint.hint_status == status;
-                if (ImGui::Selectable(AP_Hint::statusStrings[status].c_str(), is_selected)) {
-                    // update hint status
-                    ArchipelagoClient::GetInstance().UpdateHintStatus(hint.finding_player_id, hint.location_id, status);
-                }
-
-                if (is_selected)
-                    ImGui::SetItemDefaultFocus();
-
-                ImGui::PopStyleColor();
+    if (ImGui::BeginCombo("", AP_Hint::statusStrings[hint.hint_status].c_str(), 0)) {
+        for (const AP_Hint::HintStatus status : drop_down_statuses) {
+            ImGui::PushStyleColor(ImGuiCol_Text, AP_Text::colorVec[getStatusColor(status)]);
+            const bool is_selected = hint.hint_status == status;
+            if (ImGui::Selectable(AP_Hint::statusStrings[status].c_str(), is_selected)) {
+                // update hint status
+                ArchipelagoClient::GetInstance().UpdateHintStatus(hint.finding_player_id, hint.location_id, status);
             }
-            
-            ImGui::EndCombo();
+
+            if (is_selected)
+                ImGui::SetItemDefaultFocus();
+
+            ImGui::PopStyleColor();
         }
-        ImGui::PopStyleColor(6);
+
+        ImGui::EndCombo();
+    }
+    ImGui::PopStyleColor(6);
 }
 
 AP_Text::TextColor ArchipelagoHintWindow::getStatusColor(const AP_Hint::HintStatus status) const {
@@ -149,6 +154,59 @@ AP_Text::TextColor ArchipelagoHintWindow::getStatusColor(const AP_Hint::HintStat
             return AP_Text::TextColor::COLOR_DEFAULT;
     }
     return AP_Text::TextColor::COLOR_ERROR;
+}
+
+// Sort the hintlist using the stl sort
+// multi column sorting method coppied from https://pthom.github.io/imgui_explorer/ Line: 5845, func
+// CompareWithSortSpecs
+void ArchipelagoHintWindow::sortHints(ImGuiTableSortSpecs* sort_specs) {
+    if (sort_specs == NULL) {
+        return;
+    }
+
+    if (!sort_specs->SpecsDirty && !hints_updated) {
+        return;
+    }
+
+    if (HintList.size() <= 1) {
+        return;
+    }
+
+    std::sort(HintList.begin(), HintList.end(), [&](const AP_Hint::Hint& lhs, const AP_Hint::Hint& rhs) {
+        for (int i = 0; i < sort_specs->SpecsCount; i++) {
+            const ImGuiTableColumnSortSpecs* spec = &sort_specs->Specs[i];
+            int delta = 0;
+            switch (spec->ColumnUserID) {
+                case COL_RECIEVING:
+                    delta = lhs.receiving_player_name.compare(rhs.receiving_player_name);
+                    break;
+                case COL_ITEM:
+                    delta = lhs.item_name.compare(rhs.item_name);
+                    break;
+                case COL_FINDING:
+                    delta = lhs.finding_player_name.compare(rhs.finding_player_name);
+                    break;
+                case COL_LOCATION:
+                    delta = lhs.location_name.compare(rhs.location_name);
+                    break;
+                case COL_STATUS:
+                    delta = static_cast<char>(lhs.hint_status) - static_cast<char>(rhs.hint_status);
+                    break;
+            }
+
+            if (delta < 0) {
+                return spec->SortDirection == ImGuiSortDirection_Ascending;
+            } else if (delta > 0) {
+                return spec->SortDirection != ImGuiSortDirection_Ascending;
+            }
+        }
+
+        // no sort / explicit difference, return order based on index
+        return lhs.index < rhs.index;
+    });
+
+    sort_specs->SpecsDirty = false;
+    hints_updated = false;
 }
 
 void ArchipelagoHintWindow_UpdateHints(std::vector<AP_Hint::Hint>& new_hints) {
