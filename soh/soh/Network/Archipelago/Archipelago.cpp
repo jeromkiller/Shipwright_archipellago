@@ -714,9 +714,8 @@ extern "C" void Archipelago_InitSaveFile() {
     }
 }
 
-extern "C" bool Archipelago_InitConnection() {
-    ArchipelagoClient& client = ArchipelagoClient::GetInstance();
-    return client.StartClient();
+extern "C" void Archipelago_InitConnection() {
+    ArchipelagoClient::GetInstance().StartClient();
 }
 
 void LoadArchipelagoData() {

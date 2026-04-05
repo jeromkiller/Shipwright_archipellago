@@ -2149,8 +2149,8 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
                 textColorB = 80;
             }
 
-            // If not connected, make Start Archipelago text gray.
-            if (index == ASM_START_ARCHIPELAGO && CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 0) != 4) {
+            // If mid connection attempt, make Start Archipelago text gray.
+            if (index == ASM_START_ARCHIPELAGO && CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 0) != 4 && CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusInGame"), 0) == 1) {
                 textColorR = textColorG = textColorB = 100;
             }
 

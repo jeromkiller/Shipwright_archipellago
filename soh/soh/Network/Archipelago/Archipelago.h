@@ -106,7 +106,7 @@ void InitArchipelagoData(bool isDebug);
 extern "C" {
 #endif // END __cplusplus
 void Archipelago_InitSaveFile();
-bool Archipelago_InitConnection();
+void Archipelago_InitConnection();
 #ifdef __cplusplus
 }
 #endif
