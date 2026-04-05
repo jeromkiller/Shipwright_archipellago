@@ -37,19 +37,14 @@ void ArchipelagoHintWindow::DrawElement() {
         sortHints(ImGui::TableGetSortSpecs());
 
         // content
-        ImGuiListClipper clipper;
-        clipper.Begin(HintList.size());
-        while (clipper.Step()) {
-            for (int row_n = clipper.DisplayStart; row_n < clipper.DisplayEnd; row_n++) {
-                const auto& hint = HintList[row_n];
-                ImGui::PushID(static_cast<int>(hint.index));
-                addName(hint.receiving_player_name, hint.we_receive);
-                addItem(hint);
-                addName(hint.finding_player_name, hint.we_find);
-                addLocation(hint);
-                addStatus(hint);
-                ImGui::PopID();
-            }
+        for (const AP_Hint::Hint& hint : HintList) {
+            ImGui::PushID(static_cast<int>(hint.index));
+            addName(hint.receiving_player_name, hint.we_receive);
+            addItem(hint);
+            addName(hint.finding_player_name, hint.we_find);
+            addLocation(hint);
+            addStatus(hint);
+            ImGui::PopID();
         }
 
         ImGui::EndTable();
