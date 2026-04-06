@@ -210,10 +210,20 @@ bool ArchipelagoClient::StartClient() {
             return;
         }
 
+        APClient* client = apClient.get();
+
+        // If we are supposed to limit console output, check if this data concerns this slot.
+        if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("LimitConsoleToPlayer"), 0)) {
+            // (If the slot the message was sent from is not the server or this slot) or (the reciever is this slot)
+            // This requires checking if the arg.slot and arg.recieving pointers are nullptr before comparing them
+            if ((arg.slot != nullptr && (*arg.slot <= 0 || *arg.slot != client->get_player_number())) || (arg.receiving != nullptr && *arg.receiving != client->get_player_number())) {
+                return;
+            }
+        }
+        
         std::vector<AP_Text::ColoredTextNode> coloredNodes;
 
         for (const APClient::TextNode& node : arg.data) {
-            APClient* client = apClient.get();
             AP_Text::TextColor color = AP_Text::TextColor::COLOR_DEFAULT;
             std::string text;
 

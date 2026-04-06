@@ -75,6 +75,12 @@ void ArchipelagoSettingsWindow::DrawElement() {
             UIWidgets::CheckboxOptions().Color(THEME_COLOR).Tooltip("You die, others die. Others die, you die!"))) {
         apClient.SetDeathLinkTag();
     }
+
+    UIWidgets::CVarCheckbox(
+        "Limit Console Output", 
+        CVAR_REMOTE_ARCHIPELAGO("LimitConsoleToPlayer"),
+        UIWidgets::CheckboxOptions().Color(THEME_COLOR).Tooltip("Will limit any output to the AP console to only what effects the slot you are connected as.")
+    );
 };
 
 void ArchipelagoSettingsWindow::InitElement() {
