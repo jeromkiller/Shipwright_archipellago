@@ -22,6 +22,7 @@
 #include "soh/Enhancements/randomizer/SeedContext.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
+#include "soh/Enhancements/randomizer/randomizer_check_tracker.h"
 #include "soh/Notification/Notification.h"
 #include "soh/ShipInit.hpp"
 #include "soh/SaveManager.h"
@@ -642,9 +643,13 @@ void ArchipelagoClient::OpenLocalHint(RandomizerCheck sohCheckId) {
         return;
     }
 
-    // Todo: Add option to toggle filler hints on or off
     Rando::Item item = itemLoc->GetPlacedItem();
-    if (item.GetCategory() == ITEM_CATEGORY_JUNK) {
+    if (item.GetCategory() == ITEM_CATEGORY_JUNK && !CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("FillerHints"), 0)) {
+        return;
+    }
+
+    // Don't hint vanilla shop items, these aren't checks in archipelago
+    if (item.GetRandomizerGet() >= RG_BUY_DEKU_NUTS_5 && item.GetRandomizerGet() <= RG_BUY_RED_POTION_50) {
         return;
     }
 
@@ -911,6 +916,22 @@ void ArchipelagoClient::OnDialogCloseHook() {
             break;
         }
     }
+}
+
+void ArchipelagoClient::OnShopSlotChangeHook(uint8_t cursorIndex) {
+    if (!IsConnected()) {
+        return;
+    }
+
+    if (gPlayState->sceneNum == SCENE_HAPPY_MASK_SHOP) {
+        return;
+    }
+
+    int slot = CheckTracker::GetStartingShopItem(gPlayState->sceneNum) + cursorIndex;
+    if (CheckTracker::GetCheckArea() == RCAREA_KAKARIKO_VILLAGE && gPlayState->sceneNum == SCENE_BAZAAR) {
+        slot = RC_KAK_BAZAAR_ITEM_1 + cursorIndex;
+    }
+    OpenLocalHint(static_cast<RandomizerCheck>(slot));
 }
 
 bool ArchipelagoClient::slotMatch(const std::string& slotName, const std::string& roomHash) {
@@ -1267,7 +1288,9 @@ void RegisterArchipelago() {
               []() { ArchipelagoClient::GetInstance().SendDeathLink(); });
 
     COND_HOOK(GameInteractor::OnDialogClose, IS_ARCHIPELAGO,
-              []() { ArchipelagoClient::GetInstance().OnDialogCloseHook(); })
+              []() { ArchipelagoClient::GetInstance().OnDialogCloseHook(); });
+    COND_HOOK(GameInteractor::OnShopSlotChange, IS_ARCHIPELAGO,
+              [](uint8_t cursorIndex, int16_t price) { ArchipelagoClient::GetInstance().OnShopSlotChangeHook(cursorIndex); });
 }
 
 static RegisterShipInitFunc initFunc(RegisterArchipelago, { "IS_ARCHIPELAGO" });

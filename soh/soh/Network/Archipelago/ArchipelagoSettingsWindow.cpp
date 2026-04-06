@@ -75,6 +75,10 @@ void ArchipelagoSettingsWindow::DrawElement() {
             UIWidgets::CheckboxOptions().Color(THEME_COLOR).Tooltip("You die, others die. Others die, you die!"))) {
         apClient.SetDeathLinkTag();
     }
+    UIWidgets::CVarCheckbox("Open Filler Hints", CVAR_REMOTE_ARCHIPELAGO("FillerHints"),
+                            UIWidgets::CheckboxOptions()
+                                .Color(THEME_COLOR)
+                                .Tooltip("Automatically open up all hints even if they're not that usefull."));
 };
 
 void ArchipelagoSettingsWindow::InitElement() {

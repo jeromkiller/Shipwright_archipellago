@@ -84,6 +84,7 @@ class ArchipelagoClient {
     void OpenForeignHint(RandomizerHint randomizerHintId);
     void OnDialogHook();
     void OnDialogCloseHook();
+    void OnShopSlotChangeHook(uint8_t cursorIndex);
     
     bool slotMatch(const std::string& slotName, const std::string& roomHash);
 

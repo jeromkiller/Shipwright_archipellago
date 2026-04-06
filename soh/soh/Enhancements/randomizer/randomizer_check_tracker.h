@@ -64,4 +64,5 @@ void RecalculateAllAreaTotals();
 void SpoilAreaFromCheck(RandomizerCheck rc);
 void RecalculateAvailableChecks(RandomizerRegion startingRegion = RR_ROOT, RandoAgeTime startingAgeTime = RAT_NONE);
 void LoadFromPreset(nlohmann::json info);
+int GetStartingShopItem(uint32_t sceneId);
 } // namespace CheckTracker
