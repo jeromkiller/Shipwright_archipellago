@@ -6,25 +6,39 @@
 #include "ArchipelagoTypes.h"
 #include "Archipelago.h"
 #include <apclient.hpp>
+#include <unordered_set>
+
+#include "ArchipelagoConsoleWindow.h"
 
 std::vector<AP_Hint::Hint> HintList;
 bool hints_updated = false;
 
 using namespace UIWidgets;
 
+void ArchipelagoHintWindow::InitElement() {
+    for (int rg = RG_NONE + 1; rg < RG_MAX; rg++) {
+        suggestionTrie.AddItem(static_cast<RandomizerGet>(rg));
+    }
+}
+
 void ArchipelagoHintWindow::DrawElement() {
-    ImGui::SeparatorText("Archipelago Hints");
+    //ImGui::SeparatorText("Archipelago Hints");
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.15f, 0.15f, 0.15f, 1.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 8.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15.0f, 12.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 1.0f));
 
+    UIWidgets::ButtonOptions sendButtonOptions = UIWidgets::ButtonOptions().Color(THEME_COLOR).Size(ImVec2(0.0, 0.0));
+    int chatbarHeight = ImGui::GetTextLineHeight() + ImGui::GetStyle().ItemSpacing.x
+        + sendButtonOptions.padding.y
+        + 5.0f * 2.0f; // FrameBorderSize * 2
+
     static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_Sortable | ImGuiTableFlags_SortMulti |
                                    ImGuiTableFlags_SortTristate | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter |
                                    ImGuiTableFlags_BordersV | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollY;
 
-    if (ImGui::BeginTable("archipelago_hint_table", 5, flags)) {
+    if (ImGui::BeginTable("archipelago_hint_table", 5, flags, ImVec2(0, -chatbarHeight))) {
         // headers
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableSetupColumn("Receiving Player", 0, 0.0f, HintTableColumns::COL_RECIEVING);
@@ -49,6 +63,40 @@ void ArchipelagoHintWindow::DrawElement() {
 
         ImGui::EndTable();
     }
+
+    static char textEntryBuf[50];
+    PushStyleInput(THEME_COLOR);
+
+    //auto hintView = std::string_view(textEntryBuf);
+    //if (!hintView.empty()) {
+    //    const std::unordered_set<RandomizerGet> suggestions = suggestionTrie.GetSuggestions(hintView);
+    //    if (suggestions.size() < 5) {
+    //        
+    //    }
+    //}
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.0f, 8.0f));
+    if (ImGui::InputText("##AP_HintEntryField", textEntryBuf, 49, ImGuiInputTextFlags_EnterReturnsTrue)) {
+        auto hintView = std::string_view(textEntryBuf);
+        if (!hintView.empty()) {
+            const std::unordered_set<RandomizerGet> suggestions = suggestionTrie.GetSuggestions(hintView);
+            if (suggestions.size() <= 5) {
+                if (suggestions.empty()) {
+                    ArchipelagoConsole_SendMessage("No relevant results");
+                } else {
+                    ArchipelagoConsole_SendMessage("Relevant Results for: %s", std::string(hintView).c_str());
+                    for (RandomizerGet rg : suggestions) {
+                        ArchipelagoConsole_SendMessage(Rando::StaticData::GetItemTable()[rg].GetName().english.c_str());
+                    }
+                }
+            }
+        }
+
+        textEntryBuf[0] = '\0';
+    }
+    ImGui::PopStyleVar();
+    PopStyleInput();
+
 
     ImGui::PopStyleColor();
     ImGui::PopStyleVar(3);
