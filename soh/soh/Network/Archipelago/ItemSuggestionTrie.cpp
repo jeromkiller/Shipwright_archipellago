@@ -13,13 +13,15 @@
 
 void ItemSuggestionTrie::AddItem(std::string ApItemName, const int64_t ApItemId) {
     std::transform(ApItemName.begin(), ApItemName.end(), ApItemName.begin(), [](unsigned char c) { return std::tolower(c); });
+    ApItemName.erase(std::remove_if(ApItemName.begin(), ApItemName.end(), [](unsigned char c) { return !isalpha(c); }),
+        ApItemName.end());
     
-    for (auto word : std::views::split(ApItemName, ' ')) {
-        std::string parsed = std::string(word.data());
-        parsed.erase(std::remove_if(parsed.begin(), parsed.end(), [](unsigned char c) { return !isalpha(c); }),
-                     parsed.end());
-        AddWord(parsed, ApItemId);
+    std::string_view view = ApItemName;
+    while (!view.empty()) {
+        AddWord(std::string(view), ApItemId);
+        view = view.substr(1, view.size() - 1);
     }
+    std::transform(ApItemName.begin(), ApItemName.end(), ApItemName.begin(), [](unsigned char c) { return std::tolower(c); });
 }
 
 const std::unordered_set<int64_t> ItemSuggestionTrie::GetSuggestions(const std::string_view& searchString) const {
