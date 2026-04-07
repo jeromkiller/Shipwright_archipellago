@@ -62,6 +62,7 @@ class ArchipelagoClient {
     void SendDeathLink();
     void SetDeathLinkTag();
     RandomizerGet GetIceTrapItem();
+    std::string GetApItemName(int64_t ApItemId);
     std::string GetApItemHint(RandomizerCheck rc);
     std::string GetApLocationHint(RandomizerHint rh, uint8_t index);
     const nlohmann::json GetSlotData();

@@ -6,7 +6,6 @@
 #include <vector>
 #include "ship/window/gui/Gui.h"
 #include "ArchipelagoTypes.h"
-#include "ItemSuggestionTrie.h"
 
 class ArchipelagoHintWindow final : public Ship::GuiWindow {
   public:
@@ -14,7 +13,7 @@ class ArchipelagoHintWindow final : public Ship::GuiWindow {
     ~ArchipelagoHintWindow(){};
 
   protected:
-    void InitElement() override;
+    void InitElement() override {};
     void DrawElement() override;
     void UpdateElement() override{};
 
@@ -27,8 +26,6 @@ class ArchipelagoHintWindow final : public Ship::GuiWindow {
         COL_STATUS
     };
 
-    ItemSuggestionTrie suggestionTrie;
-
     void addName(const std::string& name, bool is_us);
     void addItem(const AP_Hint::Hint& hint);
     void addLocation(const AP_Hint::Hint& hint);
@@ -40,5 +37,7 @@ class ArchipelagoHintWindow final : public Ship::GuiWindow {
 };
 
 void ArchipelagoHintWindow_UpdateHints(std::vector<AP_Hint::Hint>& new_hints);
+void ArchipelagoHintWindow_ChangeHintableItems(const std::vector<int64_t>& hintableItems);
+void ArchipelagoHintWindow_ClearItemSuggestions();
 
 #endif // ARCHIPELAGO_HINT_WINDOW_H

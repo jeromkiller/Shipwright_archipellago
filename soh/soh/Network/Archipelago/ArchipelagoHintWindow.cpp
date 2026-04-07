@@ -9,17 +9,13 @@
 #include <unordered_set>
 
 #include "ArchipelagoConsoleWindow.h"
+#include "ItemSuggestionTrie.h"
 
 std::vector<AP_Hint::Hint> HintList;
+ItemSuggestionTrie suggestionTrie;
 bool hints_updated = false;
 
 using namespace UIWidgets;
-
-void ArchipelagoHintWindow::InitElement() {
-    for (int rg = RG_NONE + 1; rg < RG_MAX; rg++) {
-        suggestionTrie.AddItem(static_cast<RandomizerGet>(rg));
-    }
-}
 
 void ArchipelagoHintWindow::DrawElement() {
     //ImGui::SeparatorText("Archipelago Hints");
@@ -65,38 +61,37 @@ void ArchipelagoHintWindow::DrawElement() {
     }
 
     static char textEntryBuf[50];
-    PushStyleInput(THEME_COLOR);
-
-    //auto hintView = std::string_view(textEntryBuf);
-    //if (!hintView.empty()) {
-    //    const std::unordered_set<RandomizerGet> suggestions = suggestionTrie.GetSuggestions(hintView);
-    //    if (suggestions.size() < 5) {
-    //        
-    //    }
-    //}
-
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.0f, 8.0f));
-    if (ImGui::InputText("##AP_HintEntryField", textEntryBuf, 49, ImGuiInputTextFlags_EnterReturnsTrue)) {
-        auto hintView = std::string_view(textEntryBuf);
-        if (!hintView.empty()) {
-            const std::unordered_set<RandomizerGet> suggestions = suggestionTrie.GetSuggestions(hintView);
-            if (suggestions.size() <= 5) {
-                if (suggestions.empty()) {
-                    ArchipelagoConsole_SendMessage("No relevant results");
-                } else {
-                    ArchipelagoConsole_SendMessage("Relevant Results for: %s", std::string(hintView).c_str());
-                    for (RandomizerGet rg : suggestions) {
-                        ArchipelagoConsole_SendMessage(Rando::StaticData::GetItemTable()[rg].GetName().english.c_str());
-                    }
-                }
-            }
+    // Ideally I don't want this to be a text field that shows a child window instead of a combo box,
+    // https://github.com/ocornut/imgui/issues/718 has some more exotic methods of achieving this
+    // But something like this might be slated for a future version of ImGui and this is good enough for now
+    if (ImGui::BeginCombo("New Hint", "", 0)) {
+        if (ImGui::IsWindowAppearing()) {
+            ImGui::SetKeyboardFocusHere();
+            textEntryBuf[0] = '\0';
         }
 
-        textEntryBuf[0] = '\0';
-    }
-    ImGui::PopStyleVar();
-    PopStyleInput();
+        ImGui::InputText("##AP_HintEntryField", textEntryBuf, 49);
+        auto hintView = std::string_view(textEntryBuf);
+        const std::unordered_set<int64_t> suggestions = suggestionTrie.GetSuggestions(hintView);
+        std::vector<std::string> SuggestedItems;
+        for (int ApItemId : suggestions) {
+            SuggestedItems.emplace_back(ArchipelagoClient::GetInstance().GetApItemName(ApItemId));
+        }
+        std::sort(SuggestedItems.begin(), SuggestedItems.end());
 
+        for (int i = 0; i < SuggestedItems.size(); i++) {
+            ImGui::PushID(i);
+            std::string SuggestedItem = SuggestedItems[i];
+            if (ImGui::Selectable(SuggestedItem.c_str())) {
+                ArchipelagoConsole_SendMessage("Requesting hint for: %s", SuggestedItem.c_str());
+            }
+            ImGui::PopID();
+        }
+        if (suggestions.empty()) {
+            ImGui::TextColored(AP_Text::colorVec[AP_Text::TextColor::COLOR_RED], "No matching items found");
+        }
+        ImGui::EndCombo();
+    }
 
     ImGui::PopStyleColor();
     ImGui::PopStyleVar(3);
@@ -261,4 +256,16 @@ void ArchipelagoHintWindow::sortHints(ImGuiTableSortSpecs* sort_specs) {
 void ArchipelagoHintWindow_UpdateHints(std::vector<AP_Hint::Hint>& new_hints) {
     HintList.swap(new_hints);
     hints_updated = true;
+}
+
+void ArchipelagoHintWindow_ChangeHintableItems(const std::vector<int64_t>& hintableItems) {
+    suggestionTrie.Clear();
+    for (const int64_t itemId : hintableItems) {
+        std::string ItemName = ArchipelagoClient::GetInstance().GetApItemName(itemId);
+        suggestionTrie.AddItem(ItemName, itemId);
+    }
+}
+
+void ArchipelagoHintWindow_ClearItemSuggestions() {
+    suggestionTrie.Clear();
 }

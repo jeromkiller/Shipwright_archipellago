@@ -100,6 +100,7 @@ bool ArchipelagoClient::StartClient() {
 
         ArchipelagoClient::StartLocationScouts();
         ArchipelagoClient::InitForeignHints();
+        ArchipelagoHintWindow_ChangeHintableItems(slotData["hintable_items"]);
 
         std::string clientVersionMajor = AP_Client_consts::AP_WORLD_VERSION_MAJOR;
         std::string clientVersionMinor = AP_Client_consts::AP_WORLD_VERSION_MINOR;
@@ -429,7 +430,7 @@ void ArchipelagoClient::InitForeignHints() {
         foreignHints[(RandomizerHint)h] = {};
     }
 
-    std::map<std::string, std::vector<std::array<int, 2>>> hintsData = slotData["hint_list"];
+    std::map<std::string, std::vector<std::array<int, 2>>> hintsData = slotData["static_hints"];
     for (const auto& hintData : hintsData) {
         RandomizerHint hintKey = static_cast<RandomizerHint>(Rando::StaticData::hintNameToEnum[hintData.first]);
         std::vector<ApForeignHint> foreignLocations;
@@ -1110,6 +1111,13 @@ std::vector<RandomizerGet> archipelagoIceTrapModels = {
 
 RandomizerGet ArchipelagoClient::GetIceTrapItem() {
     return RandomElement(archipelagoIceTrapModels);
+}
+
+std::string ArchipelagoClient::GetApItemName(int64_t ApItemId) {
+    if (!IsConnected()) {
+        return "";
+    }
+    return apClient->get_item_name(ApItemId, apClient->get_game());
 }
 
 std::string ArchipelagoClient::GetApItemHint(RandomizerCheck rc) {

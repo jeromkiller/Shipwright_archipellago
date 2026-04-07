@@ -26,15 +26,16 @@ class ItemSuggestionTrie {
         }
     };
 
-    using OptionalSuggestions = std::optional<std::unordered_set<RandomizerGet>>;
+    using OptionalSuggestions = std::optional<std::unordered_set<int64_t>>;
 
-    void AddItem(const RandomizerGet rg);
-    const std::unordered_set<RandomizerGet> GetSuggestions(const std::string_view& searchString) const;
+    void AddItem(std::string ApItemName, const int64_t ApItemId);
+    const std::unordered_set<int64_t> GetSuggestions(const std::string_view& searchString) const;
+    void Clear();
 
   private:
     struct TrieNode {
         const unsigned char c;
-        std::unordered_set<RandomizerGet> leaf;
+        std::unordered_set<int64_t> leaf;
         std::vector<std::unique_ptr<TrieNode>> children;
 
         TrieNode() = delete;
@@ -43,9 +44,9 @@ class ItemSuggestionTrie {
 
     std::unique_ptr<TrieNode> rootNode = std::make_unique<TrieNode>('_');
 
-    void AddWord(const std::string& word, const RandomizerGet rg);
+    void AddWord(const std::string& word, const int64_t rg);
     TrieNode* FindOrCreateNode(const char letter, TrieNode* node);
     TrieNode* FindNode(const char letter, TrieNode* node) const;
     OptionalSuggestions GetWordSuggestion(const std::string& searchString) const;
-    void GetAllSuggestions(TrieNode* node, std::unordered_set<RandomizerGet>& outSuggestions) const;
+    void GetAllSuggestions(TrieNode* node, std::unordered_set<int64_t>& outSuggestions) const;
 };
