@@ -56,6 +56,8 @@ class ArchipelagoClient {
     int GetSlot() const;
     const std::string GetSlotName() const;
     const std::string GetAlias() const;
+    int GetHintCost() const;
+    int GetHintPoints() const;
 
     uint8_t GetConnectionStatus();
     void OnItemGiven(uint32_t rc, GetItemEntry gi, uint8_t isGiSkipped);
@@ -69,7 +71,7 @@ class ArchipelagoClient {
     const std::vector<ApItem>& GetScoutedItems();
     void UpdateHintStatus(int player, int location, AP_Hint::HintStatus status);
 
-    bool IsConnected();
+    bool IsConnected() const;
     void CheckLocation(RandomizerCheck sohCheckId);
 
     void OnItemReceived(const ApItem apItem);

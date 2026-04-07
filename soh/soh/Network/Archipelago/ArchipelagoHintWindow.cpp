@@ -21,20 +21,18 @@ void ArchipelagoHintWindow::DrawElement() {
     //ImGui::SeparatorText("Archipelago Hints");
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.15f, 0.15f, 0.15f, 1.0f));
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 8.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15.0f, 12.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 1.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 0.0f);
 
     UIWidgets::ButtonOptions sendButtonOptions = UIWidgets::ButtonOptions().Color(THEME_COLOR).Size(ImVec2(0.0, 0.0));
-    int chatbarHeight = ImGui::GetTextLineHeight() + ImGui::GetStyle().ItemSpacing.x
-        + sendButtonOptions.padding.y
-        + 5.0f * 2.0f; // FrameBorderSize * 2
+    int HintInputHeight = ImGui::GetTextLineHeightWithSpacing() * 2;
 
     static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_Sortable | ImGuiTableFlags_SortMulti |
-                                   ImGuiTableFlags_SortTristate | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter |
+                                   ImGuiTableFlags_SortTristate | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuterH |
                                    ImGuiTableFlags_BordersV | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollY;
 
-    if (ImGui::BeginTable("archipelago_hint_table", 5, flags, ImVec2(0, -chatbarHeight))) {
+    if (ImGui::BeginTable("archipelago_hint_table", 5, flags, ImVec2(0.0f, -HintInputHeight - 5))) {
         // headers
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableSetupColumn("Receiving Player", 0, 0.0f, HintTableColumns::COL_RECIEVING);
@@ -64,12 +62,27 @@ void ArchipelagoHintWindow::DrawElement() {
     // Ideally I don't want this to be a text field that shows a child window instead of a combo box,
     // https://github.com/ocornut/imgui/issues/718 has some more exotic methods of achieving this
     // But something like this might be slated for a future version of ImGui and this is good enough for now
-    if (ImGui::BeginCombo("New Hint", "", 0)) {
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.0, 0.0, 0.0, 0.0));
+    ImGui::BeginChild("HintBoxLeft", ImVec2(-HintInputHeight * 3.5, 0.0f));
+    ImGui::PopStyleColor();
+
+    int chatbarHeight = ImGui::GetTextLineHeight() + ImGui::GetStyle().ItemSpacing.x
+        + sendButtonOptions.padding.y
+        + 5.0f * 2.0f; // FrameBorderSize * 2
+    float chatBarPadding = (ImGui::GetWindowHeight() - chatbarHeight) / 2.0f;
+    if (chatBarPadding > 0.0f) {
+        ImGui::Dummy(ImVec2(0.0f, chatBarPadding));
+    }
+
+    PushStyleInput(THEME_COLOR);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.0f, 8.0f));
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 3.0);
+    if (ImGui::BeginCombo("##HintCombo", "New Hint", 0)) {
         if (ImGui::IsWindowAppearing()) {
             ImGui::SetKeyboardFocusHere();
             textEntryBuf[0] = '\0';
         }
-
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
         ImGui::InputText("##AP_HintEntryField", textEntryBuf, 49);
         auto hintView = std::string_view(textEntryBuf);
         const std::unordered_set<int64_t> suggestions = suggestionTrie.GetSuggestions(hintView);
@@ -83,7 +96,7 @@ void ArchipelagoHintWindow::DrawElement() {
             ImGui::PushID(i);
             std::string SuggestedItem = SuggestedItems[i];
             if (ImGui::Selectable(SuggestedItem.c_str())) {
-                ArchipelagoConsole_SendMessage("Requesting hint for: %s", SuggestedItem.c_str());
+                ArchipelagoClient::GetInstance().SendMessageToConsole("!hint '" + SuggestedItem + "'");
             }
             ImGui::PopID();
         }
@@ -91,6 +104,33 @@ void ArchipelagoHintWindow::DrawElement() {
             ImGui::TextColored(AP_Text::colorVec[AP_Text::TextColor::COLOR_RED], "No matching items found");
         }
         ImGui::EndCombo();
+    }
+    ImGui::PopStyleVar();
+    PopStyleInput();
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+    if (ImGui::BeginTable("ScoreTable", 2)) {
+        ImGui::TableSetupColumn("Label", ImGuiTableColumnFlags_WidthFixed, ImGui::CalcTextSize("Hint Points:").x);
+        ImGui::TableSetupColumn("Value");
+
+        const int hintCost = ArchipelagoClient::GetInstance().GetHintCost();
+        const int hintPoints = ArchipelagoClient::GetInstance().GetHintPoints();
+
+        ImGui::TableNextColumn();
+        ImGui::Text("Hint Points:");
+        ImGui::TableNextColumn();
+        if (hintPoints < hintCost) {
+            ImGui::TextColored(AP_Text::colorVec[AP_Text::TextColor::COLOR_SALMON], "%d", hintPoints);
+        } else {
+        ImGui::Text("%d", hintPoints);
+        }
+        ImGui::TableNextColumn();
+        ImGui::Text("Hint Cost:");
+        ImGui::TableNextColumn();
+        ImGui::Text("%d", hintCost);
+        ImGui::EndTable();
     }
 
     ImGui::PopStyleColor();

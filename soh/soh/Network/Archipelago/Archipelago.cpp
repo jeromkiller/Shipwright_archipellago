@@ -464,7 +464,7 @@ void ArchipelagoClient::QueueExternalCheck(const int64_t apLocation) {
     GameInteractor_ExecuteOnRandomizerExternalCheck(RC);
 }
 
-bool ArchipelagoClient::IsConnected() {
+bool ArchipelagoClient::IsConnected() const {
     if (apClient == nullptr) {
         return false;
     }
@@ -984,6 +984,20 @@ const std::string ArchipelagoClient::GetAlias() const {
 
 const nlohmann::json ArchipelagoClient::GetSlotData() {
     return slotData;
+}
+
+int ArchipelagoClient::GetHintCost() const {
+    if (!IsConnected()) {
+        return 0;
+    }
+    return apClient->get_hint_cost_points();
+}
+
+int ArchipelagoClient::GetHintPoints() const {
+    if (!IsConnected()) {
+        return 0;
+    }
+    return apClient->get_hint_points();
 }
 
 const std::vector<ArchipelagoClient::ApItem>& ArchipelagoClient::GetScoutedItems() {
