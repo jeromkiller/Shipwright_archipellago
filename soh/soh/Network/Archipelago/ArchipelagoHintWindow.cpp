@@ -118,18 +118,20 @@ void ArchipelagoHintWindow::DrawElement() {
         const int hintCost = ArchipelagoClient::GetInstance().GetHintCost();
         const int hintPoints = ArchipelagoClient::GetInstance().GetHintPoints();
 
+        // Todo I'd like the points to be right alligned, but It looks like Omar is still working on that
+        ImGui::TableNextColumn();
+        ImGui::Text("Hint Cost:");
+        ImGui::TableNextColumn();
+        ImGui::Text("%d", hintCost);
+
         ImGui::TableNextColumn();
         ImGui::Text("Hint Points:");
         ImGui::TableNextColumn();
         if (hintPoints < hintCost) {
             ImGui::TextColored(AP_Text::colorVec[AP_Text::TextColor::COLOR_SALMON], "%d", hintPoints);
         } else {
-        ImGui::Text("%d", hintPoints);
+            ImGui::Text("%d", hintPoints);
         }
-        ImGui::TableNextColumn();
-        ImGui::Text("Hint Cost:");
-        ImGui::TableNextColumn();
-        ImGui::Text("%d", hintCost);
         ImGui::EndTable();
     }
 
