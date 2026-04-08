@@ -786,6 +786,7 @@ static void CalculateBarren() {
     // Isolated Areas and Link's Pocket are never Hinted Barren
     NotBarren[RA_NONE] = true;
     NotBarren[RA_LINKS_POCKET] = true;
+    NotBarren[RA_ARCHIPELAGO_FOREIGN] = true;
 
     for (RandomizerCheck loc : ctx->allLocations) {
         Rando::ItemLocation* itemLoc = ctx->GetItemLocation(loc);

@@ -58,7 +58,7 @@ void ArchipelagoConsoleWindow::DrawElement() {
 
         for (const std::vector<AP_Text::ColoredTextNode>& line : Items) {
             for (const AP_Text::ColoredTextNode& node : line) {
-                ImGui::PushStyleColor(ImGuiCol_Text, getColorVal(node.color));
+                ImGui::PushStyleColor(ImGuiCol_Text, AP_Text::colorVec[node.color]);
                 ImGui::TextUnformatted(node.text.c_str());
                 ImGui::SameLine();
                 ImGui::PopStyleColor();
@@ -104,41 +104,3 @@ void ArchipelagoConsoleWindow::DrawElement() {
     ImGui::PopStyleColor();
     ImGui::PopStyleVar(4);
 };
-
-ImVec4 ArchipelagoConsoleWindow::getColorVal(const AP_Text::TextColor color) {
-    using apt = AP_Text::TextColor;
-    switch (color) {
-        case apt::COLOR_ERROR:
-            return ImVec4(1.0f, 0.4f, 0.4f, 1.0f);
-        case apt::COLOR_LOG:
-            return ImVec4(0.7f, 0.7f, 1.0f, 1.0f);
-        case apt::COLOR_BLACK:
-            return ImVec4(0.000f, 0.000f, 0.000f, 1.00f);
-        case apt::COLOR_RED:
-            return ImVec4(0.933f, 0.000f, 0.000f, 1.00f);
-        case apt::COLOR_GREEN:
-            return ImVec4(0.000f, 1.000f, 0.498f, 1.00f);
-        case apt::COLOR_YELLOW:
-            return ImVec4(0.980f, 0.980f, 0.824f, 1.00f);
-        case apt::COLOR_BLUE:
-            return ImVec4(0.392f, 0.584f, 0.929f, 1.00f);
-        case apt::COLOR_CYAN:
-            return ImVec4(0.000f, 0.933f, 0.933f, 1.00f);
-        case apt::COLOR_MAGENTA:
-            return ImVec4(0.933f, 0.000f, 0.933f, 1.00f);
-        case apt::COLOR_SLATEBLUE:
-            return ImVec4(0.427f, 0.545f, 0.910f, 1.00f);
-        case apt::COLOR_PLUM:
-            return ImVec4(0.686f, 0.600f, 0.937f, 1.00f);
-        case apt::COLOR_SALMON:
-            return ImVec4(0.980f, 0.502f, 0.447f, 1.00f);
-        case apt::COLOR_ORANGE:
-            return ImVec4(1.000, 0.467f, 0.000f, 1.000f);
-        case apt::COLOR_GRAY:
-            return ImVec4(0.53f, 0.53f, 0.53f, 1.00f);
-        case apt::COLOR_WHITE:
-        case apt::COLOR_DEFAULT:
-        default:
-            return ImVec4(0.93f, 0.93f, 0.93f, 1.00f);
-    };
-}

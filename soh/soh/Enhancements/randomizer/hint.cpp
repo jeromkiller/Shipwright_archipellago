@@ -333,7 +333,12 @@ const CustomMessage Hint::GetHintMessage(MessageFormat format, size_t id) const 
             // If we write items and areas
             for (uint8_t b = 0; b < items.size(); b++) {
                 toInsert.push_back(GetItemName(b));
-                toInsert.push_back(GetAreaName(b));
+                if(areas[b] == RA_ARCHIPELAGO_FOREIGN) {
+                    std::string apLocationText = ArchipelagoClient::GetInstance().GetApLocationHint(ownKey, b);
+                    toInsert.push_back(apLocationText);
+                } else {
+                    toInsert.push_back(GetAreaName(b));
+                }
             }
             break;
         }
@@ -344,7 +349,12 @@ const CustomMessage Hint::GetHintMessage(MessageFormat format, size_t id) const 
         case HINT_TYPE_FOOLISH: {
             // If we write areas
             for (uint8_t b = 0; b < areas.size(); b++) {
-                toInsert.push_back(GetAreaName(b));
+                if(areas[b] == RA_ARCHIPELAGO_FOREIGN) {
+                    std::string apLocationText = ArchipelagoClient::GetInstance().GetApLocationHint(ownKey, b);
+                    toInsert.push_back(apLocationText);
+                } else {
+                    toInsert.push_back(GetAreaName(b));
+                }
             }
             break;
         }
@@ -519,6 +529,12 @@ const HintText Hint::GetItemHintText(uint8_t slot, bool mysterious) const {
     } else if (!ctx->GetOption(RSK_HINT_CLARITY).Is(RO_HINT_CLARITY_AMBIGUOUS) &&
                targetRG == RG_ICE_TRAP) { // RANDOTODO store in item hint instead of item
         msg = CustomMessage({ ctx->overrides[hintedCheck].GetTrickName() });
+    } else if (ctx->GetOption(RSK_HINT_CLARITY).Is(RO_HINT_CLARITY_CLEAR) &&
+               (targetRG == RG_ARCHIPELAGO_ITEM_JUNK || targetRG == RG_ARCHIPELAGO_ITEM_USEFUL ||
+               targetRG == RG_ARCHIPELAGO_ITEM_PROGRESSIVE)) {
+        RandomizerCheck rc = ctx->GetItemLocation(hintedCheck)->GetRandomizerCheck();
+        std::string apItemText = ArchipelagoClient::GetInstance().GetApItemHint(rc);
+        msg = CustomMessage({Text(apItemText)});
     } else {
         msg = ctx->GetItemLocation(hintedCheck)->GetPlacedItem().GetName();
     }

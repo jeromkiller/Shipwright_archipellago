@@ -2337,5 +2337,9 @@ void RegisterCheckTrackerWidgets() {
         });
 }
 
+int GetStartingShopItem(uint32_t sceneId) {
+    return startingShopItem.find(gPlayState->sceneNum)->second;
+}
+
 static RegisterMenuInitFunc menuInitFunc(RegisterCheckTrackerWidgets);
 } // namespace CheckTracker
