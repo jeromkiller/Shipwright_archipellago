@@ -37,6 +37,7 @@ const std::unordered_map<RandomizerArea, std::string> rtAreaNames = {
     { RA_ICE_CAVERN, "Ice Cavern" },
     { RA_GERUDO_TRAINING_GROUND, "Gerudo Training Ground" },
     { RA_GANONS_CASTLE, "Ganon's Castle" },
+    { RA_ARCHIPELAGO_FOREIGN, "Invalid"},
     { RA_MAX, "Invalid" },
 };
 

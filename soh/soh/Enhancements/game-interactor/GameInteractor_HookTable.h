@@ -62,6 +62,7 @@ DEFINE_HOOK(OnLoadFile, (int32_t fileNum));
 DEFINE_HOOK(OnDeleteFile, (int32_t fileNum));
 
 DEFINE_HOOK(OnDialogMessage, ());
+DEFINE_HOOK(OnDialogClose, ());
 DEFINE_HOOK(OnPresentTitleCard, ());
 DEFINE_HOOK(OnInterfaceUpdate, ());
 DEFINE_HOOK(OnKaleidoscopeUpdate, (int16_t inDungeonScene));

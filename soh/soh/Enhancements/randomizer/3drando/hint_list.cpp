@@ -2477,6 +2477,9 @@ void StaticData::HintTable_Init() {
                                                        /*german*/ "&Man kann darauf die Worte&%rMaster Quest%w entziffern...",
                                                        /*french*/ "&Étrange... les mots %r\"Master_Quest\"%w sont gravés dessus."));
 
+    hintTextTable[RHT_ARCHIPELAGO_FOREIGN] = HintText(CustomMessage("Foreign Archipelago Location",
+                                                         /*german*/ "(German todo)Foreign Archipelago Location",
+                                                         /*french*/ "(French todo)Foreign Archipelago Location"));
     // clang-format on
 }
 } // namespace Rando

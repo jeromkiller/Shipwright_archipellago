@@ -44,6 +44,12 @@ void SohMenu::AddMenuNetwork() {
         .WindowName("Archipelago Console")
         .Options(WindowButtonOptions().Tooltip("Enables the Archipelago Console Window."));
 
+    AddWidget(path, "Popout Archipelago Hint Window", WIDGET_WINDOW_BUTTON)
+        .CVar(CVAR_WINDOW("ArchipelagoHints"))
+        .RaceDisable(false)
+        .WindowName("Archipelago Hints")
+        .Options(WindowButtonOptions().Tooltip("Enables teh Archipelago Hint Window."));
+
     // Sail
     path = { "Network", "Sail", SECTION_COLUMN_1 };
     AddSidebarEntry("Network", path.sidebarName, 3);

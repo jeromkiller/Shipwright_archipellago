@@ -2153,7 +2153,22 @@ void StaticData::HintTable_Init_Item() {
                                          // /*spanish*/una yegua
                                     CustomMessage("a four legged friend", /*german*/"ein vierbeiniger Freund", /*french*/"un puissant animal")});
                                          // /*spanish*/una amiga cuadrúpeda
-
+    // Clear AP hints get overwritten by the actual item name through the client
+    hintTextTable[RHT_ARCHIPELAGO_ITEM_JUNK] = HintText(CustomMessage("a junk archipelago item", "Todo", "Todo"),
+                                    {
+                                    CustomMessage("a junk Archipelago Item", "Todo: German", "Todo: French")
+                                    }, {
+                                    CustomMessage("some trash from another world", "Todo: German", "Todo: French")});
+    hintTextTable[RHT_ARCHIPELAGO_ITEM_USEFUL] = HintText(CustomMessage("a useful archipelago item", "Todo", "Todo"),
+                                    {
+                                    CustomMessage("a useful archipelago item", "Todo: German", "Todo: French")
+                                    }, {
+                                    CustomMessage("an item from another world", "Todo: German", "Todo: French")});
+    hintTextTable[RHT_ARCHIPELAGO_ITEM_PROGRESSIVE] = HintText(CustomMessage("a progressive archipelago item", "Todo", "Todo"),
+                                    {
+                                    CustomMessage("a progressive archipelago item", "Todo: German", "Todo: French")
+                                    }, {
+                                    CustomMessage("a great item from another world", "Todo: German", "Todo: French")});
     //What is this used for?
     hintTextTable[RHT_HINT_MYSTERIOUS] = HintText(CustomMessage("something mysterious", /*german*/"etwas Mysteriöses", /*french*/"un sacré mystère"));
                                                   // /*spanish*/algo misterioso

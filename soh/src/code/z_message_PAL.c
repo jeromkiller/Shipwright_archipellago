@@ -4646,6 +4646,7 @@ void Message_Update(PlayState* play) {
             if (msgCtx->stateTimer != 0) {
                 break;
             }
+            GameInteractor_ExecuteOnDialogClose();
             if ((msgCtx->textId >= 0xC2 && msgCtx->textId < 0xC7) ||
                 (msgCtx->textId >= 0xFA && msgCtx->textId < 0xFE)) {
                 gSaveContext.healthAccumulator = MAX_HEALTH; // Refill 20 hearts
@@ -4710,7 +4711,6 @@ void Message_Update(PlayState* play) {
             }
             sLastPlayedSong = 0xFF;
             osSyncPrintf("OCARINA_MODE=%d   chk_ocarina_no=%d\n", play->msgCtx.ocarinaMode, msgCtx->unk_E3F2);
-            // TODO: OnMessageClose hook
             break;
         case MSGMODE_PAUSED:
             break;

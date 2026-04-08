@@ -81,6 +81,10 @@ void ArchipelagoSettingsWindow::DrawElement() {
         CVAR_REMOTE_ARCHIPELAGO("LimitConsoleToPlayer"),
         UIWidgets::CheckboxOptions().Color(THEME_COLOR).Tooltip("Will limit any output to the AP console to only what effects the slot you are connected as.")
     );
+    UIWidgets::CVarCheckbox("Open Filler Hints", CVAR_REMOTE_ARCHIPELAGO("FillerHints"),
+                            UIWidgets::CheckboxOptions()
+                                .Color(THEME_COLOR)
+                                .Tooltip("Automatically open up all hints even if they're not that usefull."));
 };
 
 void ArchipelagoSettingsWindow::InitElement() {

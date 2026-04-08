@@ -337,7 +337,7 @@ if(BUILD_REMOTE_CONTROL)
     FetchContent_Declare(
             apclientpp
             GIT_REPOSITORY https://github.com/black-sliver/apclientpp.git
-            GIT_TAG 65638b7479f6894eda172e603cffa79762c0ddc1
+            GIT_TAG 557d70c9a8ba415c80f98b8c9774739e3bab16bf
     )
     FetchContent_MakeAvailable(apclientpp)
     target_include_directories(${PROJECT_NAME} PRIVATE ${apclientpp_SOURCE_DIR})

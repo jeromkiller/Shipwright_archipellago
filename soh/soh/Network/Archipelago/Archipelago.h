@@ -5,6 +5,7 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 #include <queue>
+#include <map>
 #include "ArchipelagoTypes.h"
 
 // Forward declaration
@@ -32,6 +33,13 @@ class ArchipelagoClient {
         uint64_t index;
     };
 
+    struct ApForeignHint {
+        std::string locationName;
+        std::string playerName;
+        int64_t locationId;
+        int64_t playerId;
+    };
+
     static ArchipelagoClient& GetInstance();
 
     bool StartClient();
@@ -42,22 +50,29 @@ class ArchipelagoClient {
     void SynchItems();
     void SynchSentLocations();
     void SynchReceivedLocations();
+    void InitForeignHints();
 
     // getters
     int GetSlot() const;
     const std::string GetSlotName() const;
     const std::string GetAlias() const;
+    int GetHintCost() const;
+    int GetHintPoints() const;
 
     uint8_t GetConnectionStatus();
     void OnItemGiven(uint32_t rc, GetItemEntry gi, uint8_t isGiSkipped);
     void SendDeathLink();
     void SetDeathLinkTag();
     RandomizerGet GetIceTrapItem();
+    std::string GetApItemName(int64_t ApItemId);
+    std::string GetApItemHint(RandomizerCheck rc);
+    std::string GetApLocationHint(RandomizerHint rh, uint8_t index);
     const nlohmann::json GetSlotData();
     const std::vector<ApItem>& GetScoutedItems();
+    void UpdateHintStatus(int player, int location, AP_Hint::HintStatus status);
 
-    bool IsConnected();
-    void CheckLocation(RandomizerCheck SoH_check_id);
+    bool IsConnected() const;
+    void CheckLocation(RandomizerCheck sohCheckId);
 
     void OnItemReceived(const ApItem apItem);
     void QueueItem(const ApItem item);
@@ -65,9 +80,15 @@ class ArchipelagoClient {
 
     void SendGameWon();
     void SendMessageToConsole(const std::string message);
+    void UpdateHints(const std::vector<nlohmann::json>& hints_json);
     void Poll();
     void ResetQueue();
-
+    void OpenLocalHint(RandomizerCheck sohCheckId);
+    void OpenForeignHint(RandomizerHint randomizerHintId);
+    void OnDialogHook();
+    void OnDialogCloseHook();
+    void OnShopSlotChangeHook(uint8_t cursorIndex);
+    
     bool slotMatch(const std::string& slotName, const std::string& roomHash);
 
     std::unique_ptr<APClient> apClient;
@@ -77,6 +98,7 @@ class ArchipelagoClient {
     int retries;
     std::string uri;
     std::string password;
+    std::unordered_map<RandomizerHint, std::vector<ApForeignHint>> foreignHints;
 
   protected:
     ArchipelagoClient();
