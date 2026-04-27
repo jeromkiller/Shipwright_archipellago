@@ -339,9 +339,9 @@ if(BUILD_REMOTE_CONTROL)
             GIT_REPOSITORY https://github.com/black-sliver/apclientpp.git
             GIT_TAG 7f33a3849887983378258c2fe8fc3887f687c430
     )
+    SET(APCLIENTPP_BUILD_TESTING OFF CACHE BOOL "Don't build apclientpp's tests")
     FetchContent_MakeAvailable(apclientpp)
     target_include_directories(${PROJECT_NAME} PRIVATE ${apclientpp_SOURCE_DIR})
-    option(APCLIENTPP_BUILD_TESTING OFF)
 endif()
 
 # Find/download Dr Libs (For custom audio)
