@@ -639,20 +639,20 @@ void ArchipelagoClient::UpdateHints(const std::vector<nlohmann::json>& hints_jso
         new_hint.we_find = player_number == finding_player_id;
         switch (static_cast<int>(hint_data["status"])) {
             case APClient::HINT_NO_PRIORITY:
-                new_hint.hint_status = AP_Hint::HintStatus::NO_PRIORITY;
+                new_hint.hint_status = AP_Hint::HintStatus::HINT_NO_PRIORITY;
                 break;
             case APClient::HINT_AVOID:
-                new_hint.hint_status = AP_Hint::HintStatus::AVOID;
+                new_hint.hint_status = AP_Hint::HintStatus::HINT_AVOID;
                 break;
             case APClient::HINT_PRIORITY:
-                new_hint.hint_status = AP_Hint::HintStatus::PRIORITY;
+                new_hint.hint_status = AP_Hint::HintStatus::HINT_PRIORITY;
                 break;
             case APClient::HINT_FOUND:
-                new_hint.hint_status = AP_Hint::HintStatus::FOUND;
+                new_hint.hint_status = AP_Hint::HintStatus::HINT_FOUND;
                 break;
             case APClient::HINT_UNSPECIFIED:
             default:
-                new_hint.hint_status = AP_Hint::HintStatus::UNSPECIFIED;
+                new_hint.hint_status = AP_Hint::HintStatus::HINT_UNSPECIFIED;
                 break;
         }
         new_hints.push_back(new_hint);
@@ -1157,19 +1157,19 @@ void ArchipelagoClient::UpdateHintStatus(int player, int location, AP_Hint::Hint
 
     APClient::HintStatus ap_status = APClient::HINT_UNSPECIFIED;
     switch (status) {
-        case AP_Hint::HintStatus::AVOID:
+        case AP_Hint::HintStatus::HINT_AVOID:
             ap_status = APClient::HINT_AVOID;
             break;
-        case AP_Hint::HintStatus::FOUND:
+        case AP_Hint::HintStatus::HINT_FOUND:
             ap_status = APClient::HINT_FOUND;
             break;
-        case AP_Hint::HintStatus::NO_PRIORITY:
+        case AP_Hint::HintStatus::HINT_NO_PRIORITY:
             ap_status = APClient::HINT_NO_PRIORITY;
             break;
-        case AP_Hint::HintStatus::PRIORITY:
+        case AP_Hint::HintStatus::HINT_PRIORITY:
             ap_status = APClient::HINT_PRIORITY;
             break;
-        case AP_Hint::HintStatus::UNSPECIFIED:
+        case AP_Hint::HintStatus::HINT_UNSPECIFIED:
             ap_status = APClient::HINT_UNSPECIFIED;
             break;
     }
