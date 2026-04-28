@@ -5,7 +5,6 @@
 #include "soh/OTRGlobals.h"
 #include "ArchipelagoTypes.h"
 #include "Archipelago.h"
-#include <apclient.hpp>
 #include <unordered_set>
 
 #include "ArchipelagoConsoleWindow.h"
@@ -153,11 +152,13 @@ void ArchipelagoHintWindow::addName(const std::string& name, bool is_us) {
 void ArchipelagoHintWindow::addItem(const AP_Hint::Hint& hint) {
     ImGui::TableNextColumn();
     AP_Text::TextColor color = AP_Text::TextColor::COLOR_CYAN;
-    if (hint.item_flags & APClient::ItemFlags::FLAG_ADVANCEMENT)
+    if (hint.)
+
+    if (hint.item_flags & AP_Hint::AP_Item_Flags::FLAG_ADVANCEMENT)
         color = AP_Text::TextColor::COLOR_PLUM;
-    else if (hint.item_flags & APClient::ItemFlags::FLAG_NEVER_EXCLUDE)
+    else if (hint.item_flags & AP_Hint::AP_Item_Flags::FLAG_NEVER_EXCLUDE)
         color = AP_Text::TextColor::COLOR_SLATEBLUE;
-    else if (hint.item_flags & APClient::ItemFlags::FLAG_TRAP)
+    else if (hint.item_flags & AP_Hint::AP_Item_Flags::FLAG_TRAP)
         color = AP_Text::TextColor::COLOR_SALMON;
     ImGui::PushStyleColor(ImGuiCol_Text, AP_Text::colorVec[color]);
     ImGui::TextWrapped("%s", hint.item_name.c_str());

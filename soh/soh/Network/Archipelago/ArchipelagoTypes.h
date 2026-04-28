@@ -57,6 +57,13 @@ enum class HintStatus : char {
     HINT_FOUND
 };
 
+enum AP_Item_Flags {
+    FLAG_NONE = 0,
+    FLAG_ADVANCEMENT = 1,
+    FLAG_NEVER_EXCLUDE = 2,
+    FLAG_TRAP = 4,
+};
+
 static std::unordered_map<AP_Hint::HintStatus, const std::string> statusStrings = { { AP_Hint::HintStatus::HINT_UNSPECIFIED, "Unspecified" },
                                                                      { AP_Hint::HintStatus::HINT_NO_PRIORITY, "No Priority" },
                                                                      { AP_Hint::HintStatus::HINT_AVOID, "Avoid" },
