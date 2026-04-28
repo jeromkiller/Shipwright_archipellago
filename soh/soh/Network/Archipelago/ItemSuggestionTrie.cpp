@@ -35,7 +35,8 @@ const std::unordered_set<int64_t> ItemSuggestionTrie::GetSuggestions(const std::
     }
 
     for (auto splitWord : std::views::split(searchString, ' ')) {
-        std::string parsed = std::string(splitWord.begin(), splitWord.end() - splitWord.begin());
+        // use substring constructor to hopefully make windows compiler happy
+        std::string parsed = std::string(searchString, splitWord.begin() - searchString.begin(), splitWord.end() - splitWord.begin());
         std::transform(parsed.begin(), parsed.end(), parsed.begin(), [](unsigned char c) { return std::tolower(c); });
         parsed.erase(std::remove_if(parsed.begin(), parsed.end(), [](unsigned char c) { return !isalpha(c); }),
                      parsed.end());
