@@ -152,8 +152,6 @@ void ArchipelagoHintWindow::addName(const std::string& name, bool is_us) {
 void ArchipelagoHintWindow::addItem(const AP_Hint::Hint& hint) {
     ImGui::TableNextColumn();
     AP_Text::TextColor color = AP_Text::TextColor::COLOR_CYAN;
-    if (hint.)
-
     if (hint.item_flags & AP_Hint::AP_Item_Flags::FLAG_ADVANCEMENT)
         color = AP_Text::TextColor::COLOR_PLUM;
     else if (hint.item_flags & AP_Hint::AP_Item_Flags::FLAG_NEVER_EXCLUDE)
