@@ -51,11 +51,11 @@ struct ColoredTextNode {
 namespace AP_Hint {
 enum class HintStatus : char { UNSPECIFIED = 0, NO_PRIORITY, AVOID, PRIORITY, FOUND };
 
-static std::unordered_map<HintStatus, std::string> statusStrings = { { HintStatus::UNSPECIFIED, "Unspecified" },
-                                                                     { HintStatus::NO_PRIORITY, "No Priority" },
-                                                                     { HintStatus::AVOID, "Avoid" },
-                                                                     { HintStatus::PRIORITY, "Priority" },
-                                                                     { HintStatus::FOUND, "Found" } };
+static std::unordered_map<AP_Hint::HintStatus, std::string> statusStrings = { { AP_Hint::HintStatus::UNSPECIFIED, "Unspecified" },
+                                                                     { AP_Hint::HintStatus::NO_PRIORITY, "No Priority" },
+                                                                     { AP_Hint::HintStatus::AVOID, "Avoid" },
+                                                                     { AP_Hint::HintStatus::PRIORITY, "Priority" },
+                                                                     { AP_Hint::HintStatus::FOUND, "Found" } };
 
 struct Hint {
     uint64_t index;
@@ -64,7 +64,7 @@ struct Hint {
     std::string location_name;
     std::string item_name;
     std::string entrance_name;
-    HintStatus hint_status;
+    AP_Hint::HintStatus hint_status;
     int item_flags;
     int finding_player_id;
     int location_id;
