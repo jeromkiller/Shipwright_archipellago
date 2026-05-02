@@ -3431,9 +3431,9 @@ void Interface_DrawLineupTick(PlayState* play) {
     CLOSE_DISPS(play->state.gfxCtx);
 }
 
-void Interface_ArchipelagoResetStatusFade() {
-    if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"), 0) != 255) {
-        CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"), 255);
+void Interface_ArchipelagoResetStatusFade(uint32_t *timer) {
+    if (*timer != 255) {
+        *timer = 225;
     }
 }
 
@@ -3451,12 +3451,14 @@ void Interface_DrawArchipelagoStatusString(PlayState* play) {
     int32_t scale = R_TEXT_CHAR_SCALE * 0.2f;
     int32_t sTexSize = (scale / 100.0f) * 64.0f;
     int32_t sTexScale = 1024.0f / (scale / 100.0f);
+    static int32_t fadeStatusTimer = 0x3f;
+    static bool fadeStarted = false;
 
     gDPSetEnvColor(OVERLAY_DISP++, 255, 255, 255, 255);
 
     int16_t alpha = 255;
-    if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"), 255) < 0x3f) {
-        alpha = CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"), 0x3f) << 2;
+    if (fadeStatusTimer < 0x3f) {
+        alpha = fadeStatusTimer << 2;
     }
     gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 255, 255, 255, alpha);
 
@@ -3473,15 +3475,15 @@ void Interface_DrawArchipelagoStatusString(PlayState* play) {
     switch (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 0)) {
         case 0: // Not Connected
             statusText = SohFileSelect_GetArchipelagoSettingText(ASM_NOT_CONNECTED, language);
-            CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeStarted"), 0);
-            Interface_ArchipelagoResetStatusFade();
+            fadeStarted = false;
+            Interface_ArchipelagoResetStatusFade(&fadeStatusTimer);
             break;
         case 1: // Connecting
         case 2: // Connection error, retrying
         case 3: // Connected
             statusText = SohFileSelect_GetArchipelagoSettingText(ASM_CONNECTING, language);
-            CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeStarted"), 0);
-            Interface_ArchipelagoResetStatusFade();
+            fadeStarted = false;
+            Interface_ArchipelagoResetStatusFade(&fadeStatusTimer);
             break;
         case 4: // Connected + Locations Scouted
             statusText = SohFileSelect_GetArchipelagoSettingText(ASM_CONNECTED, language);
@@ -3489,18 +3491,17 @@ void Interface_DrawArchipelagoStatusString(PlayState* play) {
             // If not paused
             if (pauseCtx->state == 0) {
                 // start fadeout
-                if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeStarted"), 0)) {
-                    CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeStarted"), 1);
-                    CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"), 255);
+                if (!fadeStarted) {
+                    fadeStarted = true;
+                    fadeStatusTimer = 255;
                 }
 
-                if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"), 0) > 0) {
-                    CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"),
-                                CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"), 255) - 1);
+                if (fadeStatusTimer > 0) {
+                    fadeStatusTimer -= 1;
                 }
             } else {
                 // Display connection info
-                Interface_ArchipelagoResetStatusFade();
+                Interface_ArchipelagoResetStatusFade(&fadeStatusTimer);
             }
 
             break;
