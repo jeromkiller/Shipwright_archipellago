@@ -3439,6 +3439,8 @@ void Interface_ArchipelagoResetStatusFade() {
 
 void Interface_DrawArchipelagoStatusString(PlayState* play) {
     InterfaceContext* interfaceCtx = &play->interfaceCtx;
+    PauseContext* pauseCtx = &play->pauseCtx;
+
     OPEN_DISPS(play->state.gfxCtx);
 
     Gfx_SetupDL_39Overlay(play->state.gfxCtx);
@@ -3484,15 +3486,21 @@ void Interface_DrawArchipelagoStatusString(PlayState* play) {
         case 4: // Connected + Locations Scouted
             statusText = SohFileSelect_GetArchipelagoSettingText(ASM_CONNECTED, language);
 
-            // start fadeout
-            if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeStarted"), 0)) {
-                CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeStarted"), 1);
-                CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"), 255);
-            }
+            // If not paused
+            if (pauseCtx->state == 0) {
+                // start fadeout
+                if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeStarted"), 0)) {
+                    CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeStarted"), 1);
+                    CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"), 255);
+                }
 
-            if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"), 0) > 0) {
-                CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"),
-                               CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"), 255) - 1);
+                if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"), 0) > 0) {
+                    CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"),
+                                CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusFadeCount"), 255) - 1);
+                }
+            } else {
+                // Display connection info
+                Interface_ArchipelagoResetStatusFade();
             }
 
             break;
