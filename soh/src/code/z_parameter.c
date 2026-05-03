@@ -3451,7 +3451,7 @@ void Interface_DrawArchipelagoStatusString(PlayState* play) {
     int32_t scale = R_TEXT_CHAR_SCALE * 0.2f;
     int32_t sTexSize = (scale / 100.0f) * 64.0f;
     int32_t sTexScale = 1024.0f / (scale / 100.0f);
-    static int32_t fadeStatusTimer = 0x3f;
+    static uint8_t fadeStatusTimer = 0x3f;
     static bool fadeStarted = false;
 
     gDPSetEnvColor(OVERLAY_DISP++, 255, 255, 255, 255);
