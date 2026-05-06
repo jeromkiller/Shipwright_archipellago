@@ -3431,7 +3431,7 @@ void Interface_DrawLineupTick(PlayState* play) {
     CLOSE_DISPS(play->state.gfxCtx);
 }
 
-void Interface_ArchipelagoResetStatusFade(uint32_t *timer) {
+void Interface_ArchipelagoResetStatusFade(uint32_t* timer) {
     if (*timer != 255) {
         *timer = 225;
     }
