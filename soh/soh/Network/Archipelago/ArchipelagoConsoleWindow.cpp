@@ -41,8 +41,6 @@ void ArchipelagoConsole_PrintJson(const std::vector<AP_Text::ColoredTextNode> no
 }
 
 void ArchipelagoConsoleWindow::DrawElement() {
-    ImGui::SeparatorText("Archipelago Log");
-
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.15f, 0.15f, 0.15f, 1.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 8.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15.0f, 12.0f));
@@ -52,8 +50,12 @@ void ArchipelagoConsoleWindow::DrawElement() {
     int chatbarHeight = ImGui::GetTextLineHeight() + ImGui::GetStyle().ItemSpacing.x + sendButtonOptions.padding.y +
                         5.0f * 2.0f; // FrameBorderSize * 2
 
-    if (ImGui::BeginChild("ScrollingRegion", ImVec2(0, -chatbarHeight), ImGuiChildFlags_AlwaysUseWindowPadding,
-                          ImGuiWindowFlags_HorizontalScrollbar)) {
+    uint8_t isWindowOpen = CVarGetInteger("gOpenWindows.ArchipelagoConsoleWindow", 0);
+
+    ImGui::Dummy(ImVec2(0.0f, 3.0f));
+
+    if (ImGui::BeginChild("ScrollingRegion", ImVec2(0, isWindowOpen ? -chatbarHeight - 10.0f : 250.0f),
+                          ImGuiChildFlags_AlwaysUseWindowPadding, ImGuiWindowFlags_HorizontalScrollbar)) {
 
         for (const std::vector<AP_Text::ColoredTextNode>& line : Items) {
             for (const AP_Text::ColoredTextNode& node : line) {
@@ -73,6 +75,8 @@ void ArchipelagoConsoleWindow::DrawElement() {
     }
     ImGui::EndChild();
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 8.0f);
+
+    ImGui::Dummy(ImVec2(0.0f, 3.0f));
 
     static char textEntryBuf[1024];
     static bool keepFocus = false;
@@ -102,4 +106,6 @@ void ArchipelagoConsoleWindow::DrawElement() {
 
     ImGui::PopStyleColor();
     ImGui::PopStyleVar(4);
+
+    ImGui::Dummy(ImVec2(0.0f, 3.0f));
 };

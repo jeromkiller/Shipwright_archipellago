@@ -17,22 +17,25 @@ bool hints_updated = false;
 using namespace UIWidgets;
 
 void ArchipelagoHintWindow::DrawElement() {
-    // ImGui::SeparatorText("Archipelago Hints");
-
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.15f, 0.15f, 0.15f, 1.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15.0f, 12.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 1.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 0.0f);
 
     UIWidgets::ButtonOptions sendButtonOptions = UIWidgets::ButtonOptions().Color(THEME_COLOR).Size(ImVec2(0.0, 0.0));
-    int HintInputHeight = ImGui::GetTextLineHeightWithSpacing() * 2;
+    int hintInputHeight = ImGui::GetTextLineHeightWithSpacing() * 2;
 
     static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_Sortable | ImGuiTableFlags_SortMulti |
                                    ImGuiTableFlags_SortTristate | ImGuiTableFlags_RowBg |
                                    ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_BordersV |
                                    ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollY;
 
-    if (ImGui::BeginTable("archipelago_hint_table", 5, flags, ImVec2(0.0f, -HintInputHeight - 5))) {
+    uint8_t isWindowOpen = CVarGetInteger("gOpenWindows.ArchipelagoHintWindow", 0);
+
+    ImGui::Dummy(ImVec2(0.0f, 3.0f));
+
+    if (ImGui::BeginTable("archipelago_hint_table", 5, flags,
+                          ImVec2(0.0f, isWindowOpen ? -hintInputHeight - 15.0f : 300.0f))) {
         // headers
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableSetupColumn("Receiving Player", 0, 0.0f, HintTableColumns::COL_RECIEVING);
@@ -63,7 +66,7 @@ void ArchipelagoHintWindow::DrawElement() {
     // https://github.com/ocornut/imgui/issues/718 has some more exotic methods of achieving this
     // But something like this might be slated for a future version of ImGui and this is good enough for now
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.0, 0.0, 0.0, 0.0));
-    ImGui::BeginChild("HintBoxLeft", ImVec2(-HintInputHeight * 3.5, 0.0f));
+    ImGui::BeginChild("HintBoxLeft", ImVec2(-hintInputHeight * 3.5, isWindowOpen ? 0.0f : 50.0f));
     ImGui::PopStyleColor();
 
     int chatbarHeight = ImGui::GetTextLineHeight() + ImGui::GetStyle().ItemSpacing.x + sendButtonOptions.padding.y +
@@ -119,8 +122,10 @@ void ArchipelagoHintWindow::DrawElement() {
 
         // Todo I'd like the points to be right alligned, but It looks like Omar is still working on that
         ImGui::TableNextColumn();
+        ImGui::Dummy(ImVec2(0.0f, 3.0f));
         ImGui::Text("Hint Cost:");
         ImGui::TableNextColumn();
+        ImGui::Dummy(ImVec2(0.0f, 3.0f));
         ImGui::Text("%d", hintCost);
 
         ImGui::TableNextColumn();
