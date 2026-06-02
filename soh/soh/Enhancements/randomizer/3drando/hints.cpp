@@ -422,13 +422,12 @@ static void AddGossipStoneHintCopies(uint8_t copies, const HintType hintType, co
     }
 }
 
-static bool CreateHint(RandomizerCheck location, uint8_t copies, HintType type, std::string distribution,
-                       bool isArchipelago = false) {
+static bool CreateHint(RandomizerCheck location, uint8_t copies, HintType type, std::string distribution) {
     auto ctx = Rando::Context::GetInstance();
     std::vector<RandomizerCheck> gossipStoneLocations;
     RandomizerArea area;
 
-    if (!isArchipelago) {
+    if (!IsArchipelagoParsing()) {
         // get a gossip stone accessible without the hinted item
         gossipStoneLocations = GetAccessibleGossipStones(location);
         if (gossipStoneLocations.empty()) {
@@ -653,7 +652,7 @@ uint8_t PlaceHints(std::vector<uint8_t>& selectedHints, std::vector<HintDistribu
     return 0;
 }
 
-void CreateStoneHints(bool isArchipelago = false) {
+void CreateStoneHints() {
     auto ctx = Rando::Context::GetInstance();
     SPDLOG_DEBUG("NOW CREATING HINTS");
     const HintSetting& hintSetting = hintSettingTable[ctx->GetOption(RSK_HINT_DISTRIBUTION).Get()];
@@ -670,9 +669,10 @@ void CreateStoneHints(bool isArchipelago = false) {
     // Add 'always' location hints
     std::vector<RandomizerCheck> alwaysHintLocations = {};
     if (hintSetting.alwaysCopies > 0) {
-        if (ctx->GetOption(RSK_RAINBOW_BRIDGE).Is(RO_BRIDGE_GREG)) {
+        if (ctx->GetOption(RSK_RAINBOW_BRIDGE).Is(RO_BRIDGE_GREG) && !IsArchipelagoParsing()) {
             // If we have Rainbow Bridge set to Greg and the greg hint isn't useful, add a hint for where Greg is
             // Do we really need this with the greg hint?
+            // Archipelago doesn't run through built-in logic, so calculating the greg locations is not possible.
             auto gregLocations = FilterFromPool(ctx->allLocations, [ctx](const RandomizerCheck loc) {
                 return ((ctx->GetItemLocation(loc)->GetPlacedRandomizerGet() == RG_GREG_RUPEE)) &&
                        ctx->GetItemLocation(loc)->IsHintable() &&
@@ -691,7 +691,7 @@ void CreateStoneHints(bool isArchipelago = false) {
         }
 
         for (RandomizerCheck location : alwaysHintLocations) {
-            CreateHint(location, hintSetting.alwaysCopies, HINT_TYPE_ITEM, "Always", isArchipelago);
+            CreateHint(location, hintSetting.alwaysCopies, HINT_TYPE_ITEM, "Always");
         }
     }
 
@@ -715,7 +715,7 @@ void CreateStoneHints(bool isArchipelago = false) {
     // Getting gossip stone locations temporarily sets one location to not be reachable.
     // Call the function one last time to get rid of false positives on locations not
     // being reachable. Archipelago bypasses anything logic related, so it skips this.
-    if (!isArchipelago) {
+    if (!IsArchipelagoParsing()) {
         ReachabilitySearch({});
     }
 }

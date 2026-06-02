@@ -75,5 +75,5 @@ RandomizerHintTextKey GetRandomJunkHint();
 extern void CreateAllHints();
 extern void CreateWarpSongTexts();
 void CreateStaticHints();
-void CreateStoneHints(bool isArchipelago);
+void CreateStoneHints();
 RandomizerHintTextKey GetRandomJunkHint();

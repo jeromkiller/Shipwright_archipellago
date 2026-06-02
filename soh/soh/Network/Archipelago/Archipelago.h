@@ -145,6 +145,8 @@ extern "C" {
 #endif // END __cplusplus
 void Archipelago_InitSaveFile();
 void Archipelago_InitConnection();
+void SetArchipelagoParsing(uint8_t state);
+uint8_t IsArchipelagoParsing();
 #ifdef __cplusplus
 }
 #endif

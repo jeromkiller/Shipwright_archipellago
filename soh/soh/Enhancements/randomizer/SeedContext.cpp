@@ -994,6 +994,7 @@ void Context::ParseArchipelagoItemsLocations(const std::vector<ArchipelagoClient
         itemLocationTable[rc].SetCustomPrice(price);
     }
 }
+
 void Context::ParseArchipelagoHints() {
     const auto& ApHintData = ArchipelagoClient::GetInstance().foreignHints;
     const auto ctx = Rando::Context::GetInstance();
@@ -1035,7 +1036,7 @@ void Context::ParseArchipelagoHints() {
         AddHint(hintKey, hint);
     }
     CreateStaticHints();
-    CreateStoneHints(true);
+    CreateStoneHints();
 }
 
 void Context::WriteHintJson(nlohmann::ordered_json& spoilerFileJson) {

@@ -38,6 +38,8 @@ extern "C" {
 extern PlayState* gPlayState;
 }
 
+uint8_t isArchipelagoParsing = 0;
+
 ArchipelagoClient::ArchipelagoClient() {
     itemQueued = false;
     disconnecting = false;
@@ -1442,6 +1444,14 @@ extern "C" void Archipelago_InitSaveFile() {
 
 extern "C" void Archipelago_InitConnection() {
     ArchipelagoClient::GetInstance().StartClient();
+}
+
+void SetArchipelagoParsing(uint8_t state) {
+    isArchipelagoParsing = state;
+}
+
+uint8_t IsArchipelagoParsing() {
+    return isArchipelagoParsing;
 }
 
 void LoadArchipelagoData() {
