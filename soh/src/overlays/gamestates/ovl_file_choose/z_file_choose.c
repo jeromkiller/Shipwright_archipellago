@@ -1052,6 +1052,7 @@ void FileChoose_UpdateArchipelagoMenu(GameState* thisx) {
             if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 0) != 5) {
                 if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 0) != 4) {
                     Archipelago_RequestInitData();
+                    CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatusInGame"), 1);
                 }
                 return;
             }
