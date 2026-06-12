@@ -1048,7 +1048,7 @@ void FileChoose_UpdateArchipelagoMenu(GameState* thisx) {
                 return;
             }
 
-            // Wait untill we have all the data we need to create a save
+            // Wait until we have all the data we need to create a save
             if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 0) != 5) {
                 if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 0) != 4) {
                     Archipelago_RequestInitData();

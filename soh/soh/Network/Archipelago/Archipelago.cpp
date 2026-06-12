@@ -422,7 +422,6 @@ bool ArchipelagoClient::StartClient() {
         }
 
         // after getting grouping data, fetch location scouts
-        // TODO only scout for locations if we're in the process of creating a save file
         // Foreign hints should be loaded from the save file as well
         if (groups_received) {
             ArchipelagoClient::InitForeignHints();
@@ -444,7 +443,7 @@ void ArchipelagoClient::RequestInitData() {
     // Location Scouts, Asynch request done here
     // Location and Item groups, Asynch request done here
 
-    CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 4); // fetching new save data
+    CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 4); // fetching foreign hint and scout data
 
     // get location scouts
     StartLocationScouts();
