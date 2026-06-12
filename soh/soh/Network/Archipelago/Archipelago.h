@@ -91,7 +91,7 @@ class ArchipelagoClient {
     void Poll();
     void ResetQueue();
 
-    void OnSceneInit(uint16_t sceneNum);
+    void AfterSceneCommands(uint16_t sceneNum);
     void SetDataStorage(const std::string& key, const nlohmann::json& value) const;
 
     void OpenLocalHint(RandomizerCheck sohCheckId);

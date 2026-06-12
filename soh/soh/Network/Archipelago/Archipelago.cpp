@@ -803,7 +803,7 @@ void ArchipelagoClient::ResetQueue() {
     std::swap(receiveQueue, empty);
 }
 
-void ArchipelagoClient::OnSceneInit(uint16_t sceneNum) {
+void ArchipelagoClient::AfterSceneCommands(uint16_t sceneNum) {
     if (ArchipelagoClient::IsConnected() && GameInteractor::IsSaveLoaded(true)) {
         ArchipelagoClient::SetDataStorage("scene", sceneNum);
     }
@@ -1592,8 +1592,8 @@ void RegisterArchipelago() {
         }
     });
 
-    COND_HOOK(GameInteractor::OnSceneInit, IS_ARCHIPELAGO,
-              [](int16_t sceneNum) { ArchipelagoClient::GetInstance().OnSceneInit(sceneNum); });
+    COND_HOOK(GameInteractor::AfterSceneCommands, IS_ARCHIPELAGO,
+              [](int16_t sceneNum) { ArchipelagoClient::GetInstance().AfterSceneCommands(sceneNum); });
 
     COND_HOOK(GameInteractor::OnDialogClose, IS_ARCHIPELAGO,
               []() { ArchipelagoClient::GetInstance().OnDialogCloseHook(); });
