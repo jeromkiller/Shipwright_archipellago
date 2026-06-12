@@ -173,7 +173,13 @@ void RegisterExtraTraps() {
         gSaveContext.ship.stats.count[COUNT_ICE_TRAPS]++;
         GameInteractor_ExecuteOnItemReceiveHooks(ItemTable_RetrieveEntry(MOD_RANDOMIZER, RG_ICE_TRAP));
         if (CVAR_EXTRA_TRAPS_VALUE) {
-            RollRandomTrap(gPlayState->sceneNum + player->getItemEntry.drawItemId);
+            if (!IS_ARCHIPELAGO) {
+                RollRandomTrap(gPlayState->sceneNum + player->getItemEntry.drawItemId);
+            } else {
+                // Add complete randomness when in Archipelago because traplinked ice traps bypass
+                // GIs, and them being deterministic in Archipelago isn't really important.
+                RollRandomTrap(gPlayState->sceneNum + Random(0, 100));
+            }
         } else {
             GameInteractor::RawAction::FreezePlayer();
         }
