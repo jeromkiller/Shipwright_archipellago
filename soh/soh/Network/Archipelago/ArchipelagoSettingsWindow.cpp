@@ -99,7 +99,7 @@ void ArchipelagoSettingsWindow::DrawElement() {
             .Tooltip("Will limit any output to the AP console to only what effects the slot you are connected as."));
     UIWidgets::CVarCombobox(
         "Send clear hints to AP", CVAR_REMOTE_ARCHIPELAGO("FillerHints"),
-        { "Progressive only", "Progressive/Usefull", "All" },
+        { "Progressive only", "Progressive/Useful", "All" },
         UIWidgets::ComboboxOptions()
             .DefaultIndex(1)
             .Color(THEME_COLOR)
