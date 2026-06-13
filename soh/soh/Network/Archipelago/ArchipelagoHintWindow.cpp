@@ -31,11 +31,11 @@ void ArchipelagoHintWindow::DrawElement() {
                                    ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollY;
 
     uint8_t isWindowOpen = CVarGetInteger("gOpenWindows.ArchipelagoHintWindow", 0);
-    static std::map<AP_Hint::HintStatus, const char*> showTag {
-        { AP_Hint::HintStatus::HINT_FOUND, CVAR_REMOTE_ARCHIPELAGO("ShowFoundHints")},
-        { AP_Hint::HintStatus::HINT_PRIORITY, CVAR_REMOTE_ARCHIPELAGO("ShowPriorityHints")},
-        { AP_Hint::HintStatus::HINT_NO_PRIORITY, CVAR_REMOTE_ARCHIPELAGO("ShowNoPriorityHints")},
-        { AP_Hint::HintStatus::HINT_AVOID, CVAR_REMOTE_ARCHIPELAGO("ShowAvoidHints")}
+    static std::map<AP_Hint::HintStatus, const char*> showTag{
+        { AP_Hint::HintStatus::HINT_FOUND, CVAR_REMOTE_ARCHIPELAGO("ShowFoundHints") },
+        { AP_Hint::HintStatus::HINT_PRIORITY, CVAR_REMOTE_ARCHIPELAGO("ShowPriorityHints") },
+        { AP_Hint::HintStatus::HINT_NO_PRIORITY, CVAR_REMOTE_ARCHIPELAGO("ShowNoPriorityHints") },
+        { AP_Hint::HintStatus::HINT_AVOID, CVAR_REMOTE_ARCHIPELAGO("ShowAvoidHints") }
     };
 
     ImGui::Dummy(ImVec2(0.0f, 3.0f));
