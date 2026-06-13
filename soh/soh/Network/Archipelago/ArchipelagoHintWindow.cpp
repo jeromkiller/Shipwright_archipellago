@@ -32,22 +32,22 @@ void ArchipelagoHintWindow::DrawElement() {
 
     uint8_t isWindowOpen = CVarGetInteger("gOpenWindows.ArchipelagoHintWindow", 0);
 
-    static std::map<AP_Hint::HintStatus, bool> showTag {
-        {AP_Hint::HintStatus::HINT_FOUND, true},
-        {AP_Hint::HintStatus::HINT_PRIORITY, true},
-        {AP_Hint::HintStatus::HINT_NO_PRIORITY, true},
-        {AP_Hint::HintStatus::HINT_AVOID, true},
+    static std::map<AP_Hint::HintStatus, bool> showTag{
+        { AP_Hint::HintStatus::HINT_FOUND, true },
+        { AP_Hint::HintStatus::HINT_PRIORITY, true },
+        { AP_Hint::HintStatus::HINT_NO_PRIORITY, true },
+        { AP_Hint::HintStatus::HINT_AVOID, true },
     };
 
     ImGui::Dummy(ImVec2(0.0f, 3.0f));
 
-    if (ImGui::BeginTable("archipelago_hint_tags", static_cast<int>(showTag.size()) + 1, 
-        ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Borders)) {
+    if (ImGui::BeginTable("archipelago_hint_tags", static_cast<int>(showTag.size()) + 1,
+                          ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Borders)) {
         ImGui::TableNextColumn();
         ImGui::Text("Status Filter ");
 
-        ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, {0.5, 0.5});
-        for (auto [tag, selected]: showTag) {
+        ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, { 0.5, 0.5 });
+        for (auto [tag, selected] : showTag) {
             ImGui::TableNextColumn();
             if (selected) {
                 ImGui::PushStyleColor(ImGuiCol_Text, { 0.0f, 0.0f, 0.0f, 1.0f });
