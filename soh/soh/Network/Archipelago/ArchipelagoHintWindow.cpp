@@ -38,7 +38,7 @@ void ArchipelagoHintWindow::DrawElement() {
                           ImVec2(0.0f, isWindowOpen ? -hintInputHeight - 15.0f : 300.0f))) {
         // headers
         ImGui::TableSetupScrollFreeze(0, 1);
-        ImGui::TableSetupColumn("Receiving Player", 0, 0.0f, HintTableColumns::COL_RECIEVING);
+        ImGui::TableSetupColumn("Receiving Player", 0, 0.0f, HintTableColumns::COL_RECEIVING);
         ImGui::TableSetupColumn("Item", 0, 0.0f, HintTableColumns::COL_ITEM);
         ImGui::TableSetupColumn("Finding Player", 0, 0.0f, HintTableColumns::COL_FINDING);
         ImGui::TableSetupColumn("Location", 0, 0.0f, HintTableColumns::COL_LOCATION);
@@ -120,7 +120,7 @@ void ArchipelagoHintWindow::DrawElement() {
         const int hintCost = ArchipelagoClient::GetInstance().GetHintCost();
         const int hintPoints = ArchipelagoClient::GetInstance().GetHintPoints();
 
-        // Todo I'd like the points to be right alligned, but It looks like Omar is still working on that
+        // Todo I'd like the points to be right aligned, but It looks like Omar is still working on that
         ImGui::TableNextColumn();
         ImGui::Dummy(ImVec2(0.0f, 3.0f));
         ImGui::Text("Hint Cost:");
@@ -246,8 +246,8 @@ AP_Text::TextColor ArchipelagoHintWindow::getStatusColor(const AP_Hint::HintStat
     return AP_Text::TextColor::COLOR_ERROR;
 }
 
-// Sort the hintlist using the stl sort
-// multi column sorting method coppied from https://pthom.github.io/imgui_explorer/ Line: 5845, func
+// Sort the hint list using the stl sort
+// multi column sorting method copied from https://pthom.github.io/imgui_explorer/ Line: 5845, func
 // CompareWithSortSpecs
 void ArchipelagoHintWindow::sortHints(ImGuiTableSortSpecs* sort_specs) {
     if (sort_specs == NULL) {
@@ -267,14 +267,30 @@ void ArchipelagoHintWindow::sortHints(ImGuiTableSortSpecs* sort_specs) {
             const ImGuiTableColumnSortSpecs* spec = &sort_specs->Specs[i];
             int delta = 0;
             switch (spec->ColumnUserID) {
-                case COL_RECIEVING:
+                case COL_RECEIVING:
                     delta = lhs.receiving_player_name.compare(rhs.receiving_player_name);
+                    // sort our player to the top or bottom for easy sorting what's yours and what isn't
+                    if (delta != 0) {
+                        if (lhs.we_receive) {
+                            delta = 1;
+                        } else if (rhs.we_receive) {
+                            delta = -1;
+                        }
+                    }
                     break;
                 case COL_ITEM:
                     delta = lhs.item_name.compare(rhs.item_name);
                     break;
                 case COL_FINDING:
                     delta = lhs.finding_player_name.compare(rhs.finding_player_name);
+                    // sort our player to the top or bottom for easy sorting what's yours and what isn't
+                    if (delta != 0) {
+                        if (lhs.we_find) {
+                            delta = 1;
+                        } else if (rhs.we_find) {
+                            delta = -1;
+                        }
+                    }
                     break;
                 case COL_LOCATION:
                     delta = lhs.location_name.compare(rhs.location_name);

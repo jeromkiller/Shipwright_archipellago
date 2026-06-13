@@ -18,7 +18,7 @@ class ArchipelagoHintWindow final : public Ship::GuiWindow {
     void UpdateElement() override{};
 
   private:
-    enum HintTableColumns : int { COL_RECIEVING, COL_ITEM, COL_FINDING, COL_LOCATION, COL_STATUS };
+    enum HintTableColumns : int { COL_RECEIVING, COL_ITEM, COL_FINDING, COL_LOCATION, COL_STATUS };
 
     void addName(const std::string& name, bool is_us);
     void addItem(const AP_Hint::Hint& hint);

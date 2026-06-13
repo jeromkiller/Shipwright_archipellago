@@ -49,7 +49,7 @@ struct ColoredTextNode {
 }; // namespace AP_Text
 
 namespace AP_Hint {
-enum class HintStatus : char { HINT_UNSPECIFIED = 0, HINT_NO_PRIORITY, HINT_AVOID, HINT_PRIORITY, HINT_FOUND };
+enum class HintStatus : char { HINT_FOUND = 0, HINT_UNSPECIFIED, HINT_NO_PRIORITY, HINT_AVOID, HINT_PRIORITY };
 
 enum AP_Item_Flags {
     FLAG_NONE = 0,
