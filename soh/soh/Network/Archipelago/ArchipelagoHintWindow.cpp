@@ -31,12 +31,11 @@ void ArchipelagoHintWindow::DrawElement() {
                                    ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollY;
 
     uint8_t isWindowOpen = CVarGetInteger("gOpenWindows.ArchipelagoHintWindow", 0);
-
-    static std::map<AP_Hint::HintStatus, bool> showTag{
-        { AP_Hint::HintStatus::HINT_FOUND, true },
-        { AP_Hint::HintStatus::HINT_PRIORITY, true },
-        { AP_Hint::HintStatus::HINT_NO_PRIORITY, true },
-        { AP_Hint::HintStatus::HINT_AVOID, true },
+    static std::map<AP_Hint::HintStatus, const char*> showTag {
+        { AP_Hint::HintStatus::HINT_FOUND, CVAR_REMOTE_ARCHIPELAGO("ShowFoundHints")},
+        { AP_Hint::HintStatus::HINT_PRIORITY, CVAR_REMOTE_ARCHIPELAGO("ShowPriorityHints")},
+        { AP_Hint::HintStatus::HINT_NO_PRIORITY, CVAR_REMOTE_ARCHIPELAGO("ShowNoPriorityHints")},
+        { AP_Hint::HintStatus::HINT_AVOID, CVAR_REMOTE_ARCHIPELAGO("ShowAvoidHints")}
     };
 
     ImGui::Dummy(ImVec2(0.0f, 3.0f));
@@ -47,16 +46,23 @@ void ArchipelagoHintWindow::DrawElement() {
         ImGui::Text("Status Filter ");
 
         ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, { 0.5, 0.5 });
-        for (auto [tag, selected] : showTag) {
+        for (auto [tag, cvar] : showTag) {
             ImGui::TableNextColumn();
+            // todo, maybe create this as an element in UIWidgets
+            bool selected = CVarGetInteger(cvar, 1) == 1;
             if (selected) {
                 ImGui::PushStyleColor(ImGuiCol_Text, { 0.0f, 0.0f, 0.0f, 1.0f });
             } else {
                 ImGui::PushStyleColor(ImGuiCol_Text, AP_Text::colorVec[getStatusColor(tag)]);
             }
             ImGui::PushStyleColor(ImGuiCol_Header, AP_Text::colorVec[getStatusColor(tag)]);
-            ImGui::Selectable(AP_Hint::statusStrings[tag].c_str(), &showTag[tag]);
+            if (ImGui::Selectable(AP_Hint::statusStrings[tag].c_str(), selected)) {
+                CVarSetInteger(cvar, selected ? 0 : 1);
+                Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+                ShipInit::Init(cvar);
+            }
             ImGui::PopStyleColor(2);
+            // ===
         }
         ImGui::PopStyleVar();
         ImGui::EndTable();
@@ -78,7 +84,7 @@ void ArchipelagoHintWindow::DrawElement() {
         // content
         for (const AP_Hint::Hint& hint : HintList) {
             if (showTag.contains(hint.hint_status)) {
-                if (!showTag[hint.hint_status]) {
+                if (CVarGetInteger(showTag[hint.hint_status], 1) == 0) {
                     continue;
                 }
             }
