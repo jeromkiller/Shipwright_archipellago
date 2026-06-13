@@ -859,7 +859,10 @@ void ArchipelagoClient::OpenLocalHint(RandomizerCheck sohCheckId) {
     }
 
     Rando::Item item = itemLoc->GetPlacedItem();
-    if (item.GetCategory() == ITEM_CATEGORY_JUNK && !CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("FillerHints"), 0)) {
+    if (item.GetCategory() == ITEM_CATEGORY_JUNK && CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("FillerHints"), 1) < 2) {
+        return;
+    }
+    if (item.GetCategory() == ITEM_CATEGORY_LESSER && CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("FillerHints"), 1) < 1) {
         return;
     }
 

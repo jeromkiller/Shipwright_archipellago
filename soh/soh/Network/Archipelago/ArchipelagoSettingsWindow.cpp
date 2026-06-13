@@ -97,10 +97,17 @@ void ArchipelagoSettingsWindow::DrawElement() {
         UIWidgets::CheckboxOptions()
             .Color(THEME_COLOR)
             .Tooltip("Will limit any output to the AP console to only what effects the slot you are connected as."));
-    UIWidgets::CVarCheckbox("Open Filler Hints", CVAR_REMOTE_ARCHIPELAGO("FillerHints"),
-                            UIWidgets::CheckboxOptions()
-                                .Color(THEME_COLOR)
-                                .Tooltip("Automatically open up all hints even if they're not that useful."));
+    UIWidgets::CVarCombobox(
+        "Send clear hints to AP", CVAR_REMOTE_ARCHIPELAGO("FillerHints"),
+        { "Progressive only", "Progressive/Usefull", "All" },
+        UIWidgets::ComboboxOptions()
+            .DefaultIndex(1)
+            .Color(THEME_COLOR)
+            .Tooltip(
+                "Automatically send hints to the Archipelago room when clear hints are on for "
+                "this slot.\nThis applies to things like hovering over shop items, talking to "
+                "scrub merchants and all of the other static hint options.\n"
+                "This does not apply to Gossip Stones as they don't always give away the exact location of an item"));
 };
 
 void ArchipelagoSettingsWindow::InitElement() {
