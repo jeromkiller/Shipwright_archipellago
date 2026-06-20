@@ -456,6 +456,9 @@ void Context::ParseArchipelago() {
 
     Rando::Settings::GetInstance()->ResetExcludedLocations();
     ArchipelagoClient& apClient = ArchipelagoClient::GetInstance();
+    // Seed the RNG from the Archipelago seed up front so everything downstream is deterministic.
+    SetSeed(apClient.GetSlotData()["archipelago_seed"]);
+    Random_Init(GetSeed());
     ParseArchipelagoItemsLocations(apClient.GetScoutedItems());
     ParseArchipelagoOptions();
     ParseArchipelagoTricks();
@@ -1015,6 +1018,9 @@ void Context::ParseArchipelagoItemsLocations(const std::vector<ArchipelagoClient
 }
 
 void Context::ParseArchipelagoHints() {
+    // Clear the hint state left over from a previous save-file creation.
+    HintReset();
+
     const auto& ApHintData = ArchipelagoClient::GetInstance().foreignHints;
     const auto ctx = Rando::Context::GetInstance();
     for (const auto& ApHint : ApHintData) {
