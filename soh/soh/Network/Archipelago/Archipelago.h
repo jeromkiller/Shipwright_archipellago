@@ -104,6 +104,8 @@ class ArchipelagoClient {
     bool slotMatch(const std::string& slotName, const std::string& roomHash);
     void newInitDataReceived();
 
+    static std::string sanitize_name(const std::string& name);
+
     std::unique_ptr<APClient> apClient;
     bool itemQueued;
     bool disconnecting;

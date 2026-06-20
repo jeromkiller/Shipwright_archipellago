@@ -40,6 +40,18 @@ extern PlayState* gPlayState;
 
 uint8_t isArchipelagoParsing = 0;
 
+// Table from https://wiki.cloudmodding.com/oot/Text_Format#Non-Japanese_Text, removed #, $, %, @, ^
+static const std::unordered_set<std::string> textBoxSupportedCharacters = { 
+    " ", "!", "\"", "'", "(", ")", "*", "+", ",", "-", ".", "/", 
+    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":", ";", "<", "=", ">", "?", 
+    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "", "M", "N", "O", 
+    "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "[", "¥", "]", "_", 
+    "`", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "L", "m", "n", "o", 
+    "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "{", "|", "}", "‾", 
+    "À", "î", "Â", "Ä", "Ç", "È", "É", "Ê", "Ë", "Ï", "Ô", "Ö", "Ù", "Û", "Ü", "ß", 
+    "à", "á", "â", "ä", "ç", "è", "é", "ê", "ë", "ï", "ô", "ö", "ù", "û", "ü"
+};
+
 ArchipelagoClient::ArchipelagoClient() {
     itemQueued = false;
     disconnecting = false;
@@ -101,7 +113,7 @@ bool ArchipelagoClient::StartClient() {
             tags.push_back("TrapLink");
         }
         apClient->ConnectSlot(CVarGetString(CVAR_REMOTE_ARCHIPELAGO("SlotName"), ""), password, 0b0101, tags,
-                              { 0, 6, 3 });
+                              { 0, 6, 7 });
     });
 
     apClient->set_slot_connected_handler([&](const nlohmann::json data) {
@@ -822,6 +834,38 @@ std::string ArchipelagoClient::get_random_group_from_location(const std::string&
     return RandomElement(containing_groups, false);
 }
 
+std::string utf8_char(const std::string& string, size_t position) {
+    if (position >= string.size()) {
+        return "";
+    }
+
+    char firstByte = string.at(position);
+    // count the number of high bits to determine the character width
+    int width = 0;
+    while (firstByte & 0x80) {
+        width++;
+        firstByte <<= 1;
+    }
+    if (width == 0) {
+        width = 1;
+    }
+    return string.substr(position, width);
+}
+
+std::string ArchipelagoClient::sanitize_name(const std::string& name) {
+    std::string sanitized_name;
+    for ( size_t i = 0; i < name.length();) {
+        std::string s = utf8_char(name, i);
+        i += s.length();
+        if (textBoxSupportedCharacters.contains(s)) {
+            sanitized_name += std::string(s.begin(), s.end());
+        } else {
+            sanitized_name += "[?]";
+        }
+    }
+    return sanitized_name;
+}
+
 void ArchipelagoClient::Poll() {
     if (apClient == nullptr) {
         return;
@@ -1494,13 +1538,13 @@ extern "C" void Archipelago_InitSaveFile() {
 
         gSaveContext.ship.quest.data.archipelago.locations[rc].itemFlags = scoutedItems[i].flags;
         SohUtils::CopyStringToCharArray(gSaveContext.ship.quest.data.archipelago.locations[rc].itemName,
-                                        scoutedItems[i].itemName,
+                                        ArchipelagoClient::sanitize_name(scoutedItems[i].itemName),
                                         ARRAY_COUNT(gSaveContext.ship.quest.data.archipelago.locations[rc].itemName));
         SohUtils::CopyStringToCharArray(gSaveContext.ship.quest.data.archipelago.locations[rc].hintName,
-                                        scoutedItems[i].hintName,
+                                        ArchipelagoClient::sanitize_name(scoutedItems[i].hintName),
                                         ARRAY_COUNT(gSaveContext.ship.quest.data.archipelago.locations[rc].hintName));
         SohUtils::CopyStringToCharArray(gSaveContext.ship.quest.data.archipelago.locations[rc].playerName,
-                                        scoutedItems[i].playerName,
+                                        ArchipelagoClient::sanitize_name(scoutedItems[i].playerName),
                                         ARRAY_COUNT(gSaveContext.ship.quest.data.archipelago.locations[rc].playerName));
     }
 }
@@ -1603,10 +1647,10 @@ void SaveArchipelagoData(SaveContext* saveContext, int sectionID, bool fullSave)
             SaveManager::Instance->SaveArray("ForeignLocation", hints.size(), [&](size_t i) {
                 SaveManager::Instance->SaveStruct("", [&]() {
                     SaveManager::Instance->SaveData("LocationId", hints[i].locationId);
-                    SaveManager::Instance->SaveData("GroupName", hints[i].groupName);
-                    SaveManager::Instance->SaveData("LocationName", hints[i].locationName);
+                    SaveManager::Instance->SaveData("GroupName", ArchipelagoClient::sanitize_name(hints[i].groupName));
+                    SaveManager::Instance->SaveData("LocationName", ArchipelagoClient::sanitize_name(hints[i].locationName));
                     SaveManager::Instance->SaveData("PlayerId", hints[i].playerId);
-                    SaveManager::Instance->SaveData("PlayerName", hints[i].playerName);
+                    SaveManager::Instance->SaveData("PlayerName", ArchipelagoClient::sanitize_name(hints[i].playerName));
                 });
             });
         });
