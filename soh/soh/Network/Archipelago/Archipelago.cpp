@@ -833,7 +833,7 @@ std::string ArchipelagoClient::get_random_group_from_location(const std::string&
     return RandomElement(containing_groups, false);
 }
 
-std::string utf8_char(const std::string& string, size_t position) {
+std::string GetUtf8char(const std::string& string, size_t position) {
     if (position >= string.size()) {
         return "";
     }
@@ -851,18 +851,18 @@ std::string utf8_char(const std::string& string, size_t position) {
     return string.substr(position, width);
 }
 
-std::string ArchipelagoClient::sanitize_name(const std::string& name) {
-    std::string sanitized_name;
+std::string ArchipelagoClient::SanitizeName(const std::string& name) {
+    std::string sanitizedName;
     for (size_t i = 0; i < name.length();) {
-        std::string s = utf8_char(name, i);
+        std::string s = GetUtf8char(name, i);
         i += s.length();
         if (textBoxSupportedCharacters.contains(s)) {
-            sanitized_name += std::string(s.begin(), s.end());
+            sanitizedName += std::string(s.begin(), s.end());
         } else {
-            sanitized_name += "[?]";
+            sanitizedName += "[?]";
         }
     }
-    return sanitized_name;
+    return sanitizedName;
 }
 
 void ArchipelagoClient::Poll() {
@@ -1537,13 +1537,13 @@ extern "C" void Archipelago_InitSaveFile() {
 
         gSaveContext.ship.quest.data.archipelago.locations[rc].itemFlags = scoutedItems[i].flags;
         SohUtils::CopyStringToCharArray(gSaveContext.ship.quest.data.archipelago.locations[rc].itemName,
-                                        ArchipelagoClient::sanitize_name(scoutedItems[i].itemName),
+                                        ArchipelagoClient::SanitizeName(scoutedItems[i].itemName),
                                         ARRAY_COUNT(gSaveContext.ship.quest.data.archipelago.locations[rc].itemName));
         SohUtils::CopyStringToCharArray(gSaveContext.ship.quest.data.archipelago.locations[rc].hintName,
-                                        ArchipelagoClient::sanitize_name(scoutedItems[i].hintName),
+                                        ArchipelagoClient::SanitizeName(scoutedItems[i].hintName),
                                         ARRAY_COUNT(gSaveContext.ship.quest.data.archipelago.locations[rc].hintName));
         SohUtils::CopyStringToCharArray(gSaveContext.ship.quest.data.archipelago.locations[rc].playerName,
-                                        ArchipelagoClient::sanitize_name(scoutedItems[i].playerName),
+                                        ArchipelagoClient::SanitizeName(scoutedItems[i].playerName),
                                         ARRAY_COUNT(gSaveContext.ship.quest.data.archipelago.locations[rc].playerName));
     }
 }
@@ -1646,12 +1646,12 @@ void SaveArchipelagoData(SaveContext* saveContext, int sectionID, bool fullSave)
             SaveManager::Instance->SaveArray("ForeignLocation", hints.size(), [&](size_t i) {
                 SaveManager::Instance->SaveStruct("", [&]() {
                     SaveManager::Instance->SaveData("LocationId", hints[i].locationId);
-                    SaveManager::Instance->SaveData("GroupName", ArchipelagoClient::sanitize_name(hints[i].groupName));
+                    SaveManager::Instance->SaveData("GroupName", ArchipelagoClient::SanitizeName(hints[i].groupName));
                     SaveManager::Instance->SaveData("LocationName",
-                                                    ArchipelagoClient::sanitize_name(hints[i].locationName));
+                                                    ArchipelagoClient::SanitizeName(hints[i].locationName));
                     SaveManager::Instance->SaveData("PlayerId", hints[i].playerId);
                     SaveManager::Instance->SaveData("PlayerName",
-                                                    ArchipelagoClient::sanitize_name(hints[i].playerName));
+                                                    ArchipelagoClient::SanitizeName(hints[i].playerName));
                 });
             });
         });
