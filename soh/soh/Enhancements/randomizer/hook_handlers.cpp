@@ -494,23 +494,34 @@ void RandomizerOnPlayerUpdateForRCQueueHandler() {
         SPDLOG_INFO("RC {} already obtained, skipping", static_cast<uint32_t>(rc));
     } else {
         iceTrapScale = 0.0f;
-        randomizerQueuedCheck = rc;
-        randomizerQueuedItemEntry = getItemEntry;
-        SPDLOG_INFO("Queuing Item mod {} item {} from RC {}", getItemEntry.modIndex, getItemEntry.itemId,
-                    static_cast<uint32_t>(rc));
 
-        // Items only meant for other slots have no value here, so when they show up from an external check we just
-        // need the location flagged. Skip their GetItem animation no matter what the SkipGetItemAnimation setting is.
         bool isItemForAnotherPlayer =
             getItemEntry.modIndex == MOD_RANDOMIZER &&
             (getItemEntry.getItemId == RG_ARCHIPELAGO_ITEM_PROGRESSIVE ||
              getItemEntry.getItemId == RG_ARCHIPELAGO_ITEM_USEFUL || getItemEntry.getItemId == RG_ARCHIPELAGO_ITEM_JUNK);
 
         if (queuedCheck.isExternal && isItemForAnotherPlayer) {
-            Item_DropCollectible(gPlayState, &spawnPos, static_cast<int16_t>(ITEM00_SOH_GIVE_ITEM_ENTRY | 0x8000));
+            // Another slot's item arriving from an external check: the location flag is already set, so just mark the
+            // check collected and return. Giving/dropping it would animate, sound, and toast an item we never get,
+            // and returning skips the OnRandomizerItemGiven hook (and its "<item> for <player>" toast) below.
+            SPDLOG_INFO("Skipping GetItem for other-slot item from external RC {}", static_cast<uint32_t>(rc));
 
-            isGiSkipped = 1;
-        } else if (
+            loc->SetCheckStatus(RCSHOW_COLLECTED);
+            CheckTracker::SpoilAreaFromCheck(rc);
+            CheckTracker::RecalculateAllAreaTotals();
+            CheckTracker::RecalculateAvailableChecks();
+            SaveManager::Instance->SaveSection(gSaveContext.fileNum, SECTION_ID_TRACKER_DATA, true);
+
+            randomizerQueuedChecks.pop();
+            return;
+        }
+
+        randomizerQueuedCheck = rc;
+        randomizerQueuedItemEntry = getItemEntry;
+        SPDLOG_INFO("Queuing Item mod {} item {} from RC {}", getItemEntry.modIndex, getItemEntry.itemId,
+                    static_cast<uint32_t>(rc));
+
+        if (
             // Skipping ItemGet animation incompatible with checks that require closing a text box to finish
             !(rc == RC_HF_OCARINA_OF_TIME_ITEM && gPlayState->sceneNum == SCENE_HYRULE_FIELD) &&
             !(rc == RC_SPIRIT_TEMPLE_SILVER_GAUNTLETS_CHEST && gPlayState->sceneNum == SCENE_DESERT_COLOSSUS) &&
