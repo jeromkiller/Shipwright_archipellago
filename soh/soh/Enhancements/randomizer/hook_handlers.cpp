@@ -462,37 +462,47 @@ void RandomizerOnPlayerUpdateForRCQueueHandler() {
         return;
     }
 
-    GetItemEntry getItemEntry;
-    QueuedCheck queuedCheck = randomizerQueuedChecks.front();
-    RandomizerCheck rc = queuedCheck.rc;
-    auto loc = Rando::Context::GetInstance()->GetItemLocation(rc);
-    uint8_t isGiSkipped = 0;
+    // Checks that give nothing (already-obtained ones, and other slots' items from external checks) only need a flag +
+    // tracker update, so we drain all of them in this single frame rather than one-per-frame. The expensive tracker
+    // recalculation and save are batched to run once afterward instead of per check. A check that actually gives an
+    // item still goes one per frame (the give -> receive cycle can only handle one at a time), so we handle it and stop.
+    bool flaggedExternal = false;
 
-    if (rc == RC_ARCHIPELAGO_RECEIVED_ITEM) {
-        getItemEntry = Rando::Context::GetInstance()->GetArchipelagoGIEntry();
-    } else {
-        RandomizerGet vanillaRandomizerGet = Rando::StaticData::GetLocation(rc)->GetVanillaItem();
-        GetItemID vanillaItem = (GetItemID)Rando::StaticData::RetrieveItem(vanillaRandomizerGet).GetItemID();
-        getItemEntry = Rando::Context::GetInstance()->GetFinalGIEntry(rc, true, (GetItemID)vanillaRandomizerGet);
-    }
-    GetItemCategory getItemCategory = Randomizer_AdjustItemCategory(getItemEntry);
+    while (!randomizerQueuedChecks.empty()) {
+        QueuedCheck queuedCheck = randomizerQueuedChecks.front();
+        RandomizerCheck rc = queuedCheck.rc;
+        auto loc = Rando::Context::GetInstance()->GetItemLocation(rc);
 
-    // When Ocarina or Iron Boots chest has been received externally before, and then picked up in the game itself,
-    // it'll be skipped and not give the song properly because the RC is already checked off. So instead we handle
-    // it here and send out the check locked behind them manually.
-    if (loc->HasObtained()) {
-        if (rc == RC_HF_OCARINA_OF_TIME_ITEM) {
-            RandomizerOnExternalCheckHandler(RC_SONG_FROM_OCARINA_OF_TIME);
-        } else if (rc == RC_ICE_CAVERN_IRON_BOOTS_CHEST) {
-            RandomizerOnExternalCheckHandler(RC_SHEIK_IN_ICE_CAVERN);
-        } else if (rc == RC_TOT_MASTER_SWORD) {
-            RandomizerOnExternalCheckHandler(RC_GIFT_FROM_RAURU);
+        GetItemEntry getItemEntry;
+        if (rc == RC_ARCHIPELAGO_RECEIVED_ITEM) {
+            getItemEntry = Rando::Context::GetInstance()->GetArchipelagoGIEntry();
+        } else {
+            RandomizerGet vanillaRandomizerGet = Rando::StaticData::GetLocation(rc)->GetVanillaItem();
+            GetItemID vanillaItem = (GetItemID)Rando::StaticData::RetrieveItem(vanillaRandomizerGet).GetItemID();
+            getItemEntry = Rando::Context::GetInstance()->GetFinalGIEntry(rc, true, (GetItemID)vanillaRandomizerGet);
         }
-    }
+        GetItemCategory getItemCategory = Randomizer_AdjustItemCategory(getItemEntry);
 
-    if (loc->HasObtained()) {
-        SPDLOG_INFO("RC {} already obtained, skipping", static_cast<uint32_t>(rc));
-    } else {
+        // When Ocarina or Iron Boots chest has been received externally before, and then picked up in the game itself,
+        // it'll be skipped and not give the song properly because the RC is already checked off. So instead we handle
+        // it here and send out the check locked behind them manually.
+        if (loc->HasObtained()) {
+            if (rc == RC_HF_OCARINA_OF_TIME_ITEM) {
+                RandomizerOnExternalCheckHandler(RC_SONG_FROM_OCARINA_OF_TIME);
+            } else if (rc == RC_ICE_CAVERN_IRON_BOOTS_CHEST) {
+                RandomizerOnExternalCheckHandler(RC_SHEIK_IN_ICE_CAVERN);
+            } else if (rc == RC_TOT_MASTER_SWORD) {
+                RandomizerOnExternalCheckHandler(RC_GIFT_FROM_RAURU);
+            }
+
+            SPDLOG_INFO("RC {} already obtained, skipping", static_cast<uint32_t>(rc));
+            // Still fire the item-given hook as the pre-loop code did for every dequeued check; for an
+            // already-obtained check this just lets the AP client re-report the location (a no-op once it's sent).
+            GameInteractor_ExecuteOnRandomizerItemGivenHooks((uint32_t)rc, getItemEntry, 0);
+            randomizerQueuedChecks.pop();
+            continue;
+        }
+
         iceTrapScale = 0.0f;
 
         bool isItemForAnotherPlayer =
@@ -502,20 +512,21 @@ void RandomizerOnPlayerUpdateForRCQueueHandler() {
 
         if (queuedCheck.isExternal && isItemForAnotherPlayer) {
             // Another slot's item arriving from an external check: the location flag is already set, so just mark the
-            // check collected and return. Giving/dropping it would animate, sound, and toast an item we never get,
-            // and returning skips the OnRandomizerItemGiven hook (and its "<item> for <player>" toast) below.
+            // check collected. Giving/dropping it would animate, sound, and toast an item we never get; skipping the
+            // give also skips the OnRandomizerItemGiven hook (and its "<item> for <player>" toast). The heavy tracker
+            // work is deferred to the batched pass after the loop.
             SPDLOG_INFO("Skipping GetItem for other-slot item from external RC {}", static_cast<uint32_t>(rc));
 
             loc->SetCheckStatus(RCSHOW_COLLECTED);
             CheckTracker::SpoilAreaFromCheck(rc);
-            CheckTracker::RecalculateAllAreaTotals();
-            CheckTracker::RecalculateAvailableChecks();
-            SaveManager::Instance->SaveSection(gSaveContext.fileNum, SECTION_ID_TRACKER_DATA, true);
+            flaggedExternal = true;
 
             randomizerQueuedChecks.pop();
-            return;
+            continue;
         }
 
+        // This check gives an item: queue it (optionally skipping the GetItem animation) and stop for this frame.
+        uint8_t isGiSkipped = 0;
         randomizerQueuedCheck = rc;
         randomizerQueuedItemEntry = getItemEntry;
         SPDLOG_INFO("Queuing Item mod {} item {} from RC {}", getItemEntry.modIndex, getItemEntry.itemId,
@@ -543,11 +554,19 @@ void RandomizerOnPlayerUpdateForRCQueueHandler() {
 
             isGiSkipped = 1;
         }
+
+        GameInteractor_ExecuteOnRandomizerItemGivenHooks((uint32_t)rc, getItemEntry, isGiSkipped);
+
+        randomizerQueuedChecks.pop();
+        break;
     }
 
-    GameInteractor_ExecuteOnRandomizerItemGivenHooks((uint32_t)rc, getItemEntry, isGiSkipped);
-
-    randomizerQueuedChecks.pop();
+    // Batch the heavy tracker work for every silently-flagged external check into a single pass.
+    if (flaggedExternal) {
+        CheckTracker::RecalculateAllAreaTotals();
+        CheckTracker::RecalculateAvailableChecks();
+        SaveManager::Instance->SaveSection(gSaveContext.fileNum, SECTION_ID_TRACKER_DATA, true);
+    }
 }
 
 void RandomizerOnPlayerUpdateForItemQueueHandler() {
