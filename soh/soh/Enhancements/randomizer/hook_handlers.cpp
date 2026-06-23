@@ -465,7 +465,8 @@ void RandomizerOnPlayerUpdateForRCQueueHandler() {
     // Checks that give nothing (already-obtained ones, and other slots' items from external checks) only need a flag +
     // tracker update, so we drain all of them in this single frame rather than one-per-frame. The expensive tracker
     // recalculation and save are batched to run once afterward instead of per check. A check that actually gives an
-    // item still goes one per frame (the give -> receive cycle can only handle one at a time), so we handle it and stop.
+    // item still goes one per frame (the give -> receive cycle can only handle one at a time), so we handle it and
+    // stop.
     bool flaggedExternal = false;
 
     while (!randomizerQueuedChecks.empty()) {
@@ -506,9 +507,9 @@ void RandomizerOnPlayerUpdateForRCQueueHandler() {
         iceTrapScale = 0.0f;
 
         bool isItemForAnotherPlayer =
-            getItemEntry.modIndex == MOD_RANDOMIZER &&
-            (getItemEntry.getItemId == RG_ARCHIPELAGO_ITEM_PROGRESSIVE ||
-             getItemEntry.getItemId == RG_ARCHIPELAGO_ITEM_USEFUL || getItemEntry.getItemId == RG_ARCHIPELAGO_ITEM_JUNK);
+            getItemEntry.modIndex == MOD_RANDOMIZER && (getItemEntry.getItemId == RG_ARCHIPELAGO_ITEM_PROGRESSIVE ||
+                                                        getItemEntry.getItemId == RG_ARCHIPELAGO_ITEM_USEFUL ||
+                                                        getItemEntry.getItemId == RG_ARCHIPELAGO_ITEM_JUNK);
 
         if (queuedCheck.isExternal && isItemForAnotherPlayer) {
             // Another slot's item arriving from an external check: the location flag is already set, so just mark the
