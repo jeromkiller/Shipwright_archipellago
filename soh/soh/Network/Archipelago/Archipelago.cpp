@@ -1708,7 +1708,7 @@ void RegisterArchipelago() {
 
     COND_HOOK(GameInteractor::OnItemReceive, IS_ARCHIPELAGO, [](GetItemEntry itemEntry) {
         // If item Received is an Ice Trap, send a Trap Link
-        if (itemEntry.itemId == RG_ICE_TRAP) {
+        if (itemEntry.itemId == RG_ICE_TRAP && itemEntry.modIndex == MOD_RANDOMIZER) {
             ArchipelagoClient::GetInstance().SendTrapLink();
         }
     });
