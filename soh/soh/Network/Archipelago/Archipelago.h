@@ -44,10 +44,10 @@ class ArchipelagoClient {
     };
 
     struct ApHintFetchData {
-      bool fetching = false;
-      std::vector<std::string> hint_group_games;
-      size_t request_index;
-      size_t num_requests;
+        bool fetching = false;
+        std::vector<std::string> hint_group_games;
+        size_t request_index;
+        size_t num_requests;
     };
 
     static ArchipelagoClient& GetInstance();
@@ -110,8 +110,12 @@ class ArchipelagoClient {
 
     bool slotMatch(const std::string& slotName, const std::string& roomHash);
     void newInitDataReceived();
-    size_t GetFetchingGroupMax() const { return fetchingGroups.fetching ? fetchingGroups.num_requests : 0; };
-    size_t GetFetchingGroupCurrent() const { return fetchingGroups.fetching ? fetchingGroups.request_index : 0; };
+    size_t GetFetchingGroupMax() const {
+        return fetchingGroups.fetching ? fetchingGroups.num_requests : 0;
+    };
+    size_t GetFetchingGroupCurrent() const {
+        return fetchingGroups.fetching ? fetchingGroups.request_index : 0;
+    };
 
     static std::string SanitizeName(const std::string& name);
 

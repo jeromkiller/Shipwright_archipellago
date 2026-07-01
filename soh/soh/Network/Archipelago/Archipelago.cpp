@@ -429,8 +429,8 @@ bool ArchipelagoClient::StartClient() {
             const std::string item_group = "_read_item_name_groups_" + game;
             const std::string location_group = "_read_location_name_groups_" + game;
             if (data.contains(item_group)) {
-                    UpdateItemGroup(game, data.at(item_group));
-                }
+                UpdateItemGroup(game, data.at(item_group));
+            }
             if (data.contains(location_group)) {
                 UpdateLocationGroup(game, data.at(location_group));
             }
@@ -438,7 +438,7 @@ bool ArchipelagoClient::StartClient() {
             all_groups_received = fetchingGroups.request_index == fetchingGroups.num_requests;
             if (!all_groups_received) {
                 const std::string& next_game = fetchingGroups.hint_group_games[fetchingGroups.request_index];
-                apClient->Get({ "_read_item_name_groups_" + next_game, "_read_location_name_groups_" + next_game});
+                apClient->Get({ "_read_item_name_groups_" + next_game, "_read_location_name_groups_" + next_game });
             }
         }
 
