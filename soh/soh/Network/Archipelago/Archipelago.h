@@ -43,6 +43,13 @@ class ArchipelagoClient {
         int64_t playerId;
     };
 
+    struct ApHintFetchData {
+      bool fetching = false;
+      std::vector<std::string> hint_group_games;
+      size_t request_index;
+      size_t num_requests;
+    };
+
     static ArchipelagoClient& GetInstance();
 
     bool StartClient();
@@ -103,6 +110,8 @@ class ArchipelagoClient {
 
     bool slotMatch(const std::string& slotName, const std::string& roomHash);
     void newInitDataReceived();
+    size_t GetFetchingGroupMax() const { return fetchingGroups.fetching ? fetchingGroups.num_requests : 0; };
+    size_t GetFetchingGroupCurrent() const { return fetchingGroups.fetching ? fetchingGroups.request_index : 0; };
 
     static std::string SanitizeName(const std::string& name);
 
@@ -140,6 +149,7 @@ class ArchipelagoClient {
     std::set<int64_t> locations;
     std::vector<ApItem> scoutedItems;
     std::queue<ApItem> receiveQueue;
+    ApHintFetchData fetchingGroups;
 
     bool locationsScouted;
     bool hintsInitialized;
@@ -155,6 +165,8 @@ void Archipelago_InitConnection();
 void Archipelago_RequestInitData();
 void SetArchipelagoParsing(uint8_t state);
 uint8_t IsArchipelagoParsing();
+size_t Archipelago_FetchHintMax();
+size_t Archipelago_FetchHintCurrent();
 #ifdef __cplusplus
 }
 #endif

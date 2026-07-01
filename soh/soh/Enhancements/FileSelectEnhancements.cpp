@@ -109,9 +109,9 @@ std::array<std::string, LANGUAGE_MAX> ArchipelagoSettingsMenuText[ASM_MAX]{
     },
     // ASM_LOADING_DATA
     {
-        "Loading Data...",
-        "Loading Data...",
-        "Loading Data...",
+        "Loading Data: ",
+        "Loading Data: ",
+        "Loading Data: ",
     },
     // ASM_DATA_LOADED
     {

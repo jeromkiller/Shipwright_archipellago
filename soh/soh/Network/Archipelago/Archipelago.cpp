@@ -423,29 +423,29 @@ bool ArchipelagoClient::StartClient() {
             UpdateHints(data.at(hint_key.str()));
         }
 
-        std::unordered_set<std::string> games;
-        for (const APClient::NetworkPlayer& player : apClient->get_players()) {
-            games.emplace(apClient->get_player_game(player.slot));
-        }
-
-        // item & location groups
-        bool groups_received = false;
-        for (const std::string& game : games) {
-            const std::string item_group_key = "_read_item_name_groups_" + game;
-            if (data.contains(item_group_key)) {
-                groups_received = true;
-                UpdateItemGroup(game, data.at(item_group_key));
+        bool all_groups_received = false;
+        if (fetchingGroups.request_index != fetchingGroups.num_requests) {
+            const std::string& game = fetchingGroups.hint_group_games[fetchingGroups.request_index];
+            const std::string item_group = "_read_item_name_groups_" + game;
+            const std::string location_group = "_read_location_name_groups_" + game;
+            if (data.contains(item_group)) {
+                    UpdateItemGroup(game, data.at(item_group));
+                }
+            if (data.contains(location_group)) {
+                UpdateLocationGroup(game, data.at(location_group));
             }
-            const std::string location_group_key = "_read_location_name_groups_" + game;
-            if (data.contains(location_group_key)) {
-                groups_received = true;
-                UpdateLocationGroup(game, data.at(location_group_key));
+            fetchingGroups.request_index++;
+            all_groups_received = fetchingGroups.request_index == fetchingGroups.num_requests;
+            if (!all_groups_received) {
+                const std::string& next_game = fetchingGroups.hint_group_games[fetchingGroups.request_index];
+                apClient->Get({ "_read_item_name_groups_" + next_game, "_read_location_name_groups_" + next_game});
             }
         }
 
         // after getting grouping data, fetch location scouts
         // Foreign hints should be loaded from the save file as well
-        if (groups_received) {
+        if (all_groups_received) {
+            fetchingGroups.fetching = false;
             ArchipelagoClient::InitForeignHints();
         }
     });
@@ -462,13 +462,10 @@ void ArchipelagoClient::RequestInitData() {
     // To create a save file we'll need the following data:
     // Slot Data: received on connection, we already have this
     // Data package: received on connection, we already have this
-    // Location Scouts, Asynch request done here
     // Location and Item groups, Asynch request done here
+    // Location Scouts, Asynch request done after item groups have been loaded
 
     CVarSetInteger(CVAR_REMOTE_ARCHIPELAGO("ConnectionStatus"), 4); // fetching foreign hint and scout data
-
-    // get location scouts
-    StartLocationScouts();
 
     // request the item and location groups
     std::unordered_set<std::string> games;
@@ -476,12 +473,14 @@ void ArchipelagoClient::RequestInitData() {
         games.emplace(apClient->get_player_game(player.slot));
     }
 
-    std::list<std::string> requests;
+    fetchingGroups = ApHintFetchData();
     for (const std::string& game : games) {
-        requests.emplace_back("_read_item_name_groups_" + game);
-        requests.emplace_back("_read_location_name_groups_" + game);
+        fetchingGroups.hint_group_games.emplace_back(game);
     }
-    apClient->Get(requests);
+    fetchingGroups.num_requests = fetchingGroups.hint_group_games.size();
+    const std::string& firstGame = fetchingGroups.hint_group_games[0];
+    fetchingGroups.fetching = true;
+    apClient->Get({ "_read_item_name_groups_" + firstGame, "_read_location_name_groups_" + firstGame });
 }
 
 // update the connection status if we have all data we need to initialize a save file
@@ -613,6 +612,9 @@ void ArchipelagoClient::InitForeignHints() {
 
     hintsInitialized = true;
     newInitDataReceived();
+
+    // get location scouts
+    StartLocationScouts();
 }
 
 void ArchipelagoClient::QueueExternalCheck(const int64_t apLocation) {
@@ -1559,6 +1561,14 @@ extern "C" void Archipelago_InitConnection() {
 
 extern "C" void Archipelago_RequestInitData() {
     ArchipelagoClient::GetInstance().RequestInitData();
+}
+
+extern "C" size_t Archipelago_FetchHintMax() {
+    return ArchipelagoClient::GetInstance().GetFetchingGroupMax();
+}
+
+extern "C" size_t Archipelago_FetchHintCurrent() {
+    return ArchipelagoClient::GetInstance().GetFetchingGroupCurrent();
 }
 
 void SetArchipelagoParsing(uint8_t state) {
