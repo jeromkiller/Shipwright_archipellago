@@ -137,11 +137,13 @@ class EntranceShuffler {
     void CreateEntranceOverrides();
     void UnshuffleAllEntrances();
     void ParseJson(nlohmann::json spoilerFileJson);
+    void SetEntrancesFromArchipelago(nlohmann::json entranceLayout);
     void ApplyEntranceOverrides();
 
     static const Entrance* GetEntranceByIndex(int16_t index);
 
   private:
+    void SetBlueWarps();
     std::vector<Entrance*> AssumeEntrancePool(std::vector<Entrance*>& entrancePool);
     bool ShuffleOneWayPriorityEntrances(std::map<std::string, PriorityEntrance>& oneWayPriorities,
                                         EntrancePools oneWayEntrancePools, EntrancePools oneWayTargetEntrancePools,
