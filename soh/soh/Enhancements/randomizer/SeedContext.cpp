@@ -461,6 +461,7 @@ void Context::ParseArchipelago() {
     Random_Init(GetSeed());
     ParseArchipelagoItemsLocations(apClient.GetScoutedItems());
     ParseArchipelagoOptions();
+    ParseArchipelagoEntrances();
     ParseArchipelagoTricks();
     ParseArchipelagoExcludedLocations();
     ParseArchipelagoHints();
@@ -858,8 +859,9 @@ void Context::ParseArchipelagoOptions() {
     mOptions[RSK_KEYRINGS_BOTTOM_OF_THE_WELL].Set(slotData["bottom_of_the_well_key_ring"]);
     mOptions[RSK_KEYRINGS_GTG].Set(slotData["gerudo_training_ground_key_ring"]);
     mOptions[RSK_KEYRINGS_GANONS_CASTLE].Set(slotData["ganons_castle_key_ring"]);
-    mOptions[RSK_SHUFFLE_ENTRANCES].Set(0);
-    mOptions[RSK_SHUFFLE_DUNGEON_ENTRANCES].Set(0);
+    uint8_t shuffleDungeonEntrances = slotData.value("shuffle_dungeon_entrances", 0);
+    mOptions[RSK_SHUFFLE_ENTRANCES].Set(shuffleDungeonEntrances == 0 ? RO_GENERIC_OFF : RO_GENERIC_ON);
+    mOptions[RSK_SHUFFLE_DUNGEON_ENTRANCES].Set(shuffleDungeonEntrances);
     mOptions[RSK_SHUFFLE_OVERWORLD_ENTRANCES].Set(0);
     mOptions[RSK_SHUFFLE_INTERIOR_ENTRANCES].Set(0);
     mOptions[RSK_SHUFFLE_THIEVES_HIDEOUT_ENTRANCES].Set(0);
@@ -914,6 +916,16 @@ void Context::ParseArchipelagoOptions() {
     mOptions[RSK_LOCK_OVERWORLD_DOORS].Set(slotData["lock_overworld_doors"]);
     mOptions[RSK_SHUFFLE_GRASS].Set(slotData["shuffle_grass"]);
     mOptions[RSK_ROCS_FEATHER].Set(slotData["rocs_feather"]);
+}
+
+void Context::ParseArchipelagoEntrances() {
+    // Apply the dungeon entrance layout computed by the AP generator (if any).
+    if (mOptions[RSK_SHUFFLE_DUNGEON_ENTRANCES].IsNot(RO_DUNGEON_ENTRANCE_SHUFFLE_OFF)) {
+        const nlohmann::json slotData = ArchipelagoClient::GetInstance().GetSlotData();
+        if (slotData.contains("dungeon_entrance_layout")) {
+            mEntranceShuffler->SetEntrancesFromArchipelago(slotData["dungeon_entrance_layout"]);
+        }
+    }
 }
 
 void Context::ParseArchipelagoTricks() {
