@@ -1658,8 +1658,10 @@ void EntranceShuffler::SetEntrancesFromArchipelago(nlohmann::json entranceLayout
             SPDLOG_ERROR("[AP ER] Unknown region name in dungeon_entrance_layout: {} -> {}", origName, newName);
             continue;
         }
-        Entrance* eOrig = forwardByEntryway.count(regionByName[origName]) ? forwardByEntryway[regionByName[origName]] : nullptr;
-        Entrance* eNew = forwardByEntryway.count(regionByName[newName]) ? forwardByEntryway[regionByName[newName]] : nullptr;
+        Entrance* eOrig =
+            forwardByEntryway.count(regionByName[origName]) ? forwardByEntryway[regionByName[origName]] : nullptr;
+        Entrance* eNew =
+            forwardByEntryway.count(regionByName[newName]) ? forwardByEntryway[regionByName[newName]] : nullptr;
         if (eOrig == nullptr || eNew == nullptr) {
             SPDLOG_ERROR("[AP ER] Missing dungeon entrance for: {} -> {}", origName, newName);
             continue;
