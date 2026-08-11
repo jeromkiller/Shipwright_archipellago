@@ -51,6 +51,20 @@ static const std::unordered_set<std::string> textBoxSupportedCharacters = {
 
 };
 
+// apclientpp uses wswrap's throwing send path, and the socket can die between polls while the
+// client still reports SLOT_CONNECTED, so any packet sent from the game thread can throw from
+// inside websocketpp. Catch it here: poll() notices the dead socket and reconnects, and
+// SynchSentLocations re-sends any location checks that were lost.
+template <typename ApCall> static bool TryApCall(const char* what, ApCall&& apCall) {
+    try {
+        apCall();
+        return true;
+    } catch (const std::exception& e) {
+        SPDLOG_ERROR("[Archipelago] {} failed: {}", what, e.what());
+        return false;
+    }
+}
+
 ArchipelagoClient::ArchipelagoClient() {
     itemQueued = false;
     disconnecting = false;
@@ -546,13 +560,13 @@ void ArchipelagoClient::StartLocationScouts() {
     for (const int64_t loc_id : found_loc_set) {
         location_list.emplace_back(loc_id);
     }
-    apClient->LocationScouts(location_list);
+    TryApCall("LocationScouts", [&] { apClient->LocationScouts(location_list); });
 }
 
 void ArchipelagoClient::SynchItems() {
     // Send a Synch request to get any items we may have missed
     ResetQueue();
-    apClient->Sync();
+    TryApCall("Sync", [&] { apClient->Sync(); });
 }
 
 void ArchipelagoClient::SynchSentLocations() {
@@ -569,7 +583,7 @@ void ArchipelagoClient::SynchSentLocations() {
         }
     }
 
-    apClient->LocationChecks(checkedLocations);
+    TryApCall("LocationChecks", [&] { apClient->LocationChecks(checkedLocations); });
 }
 
 void ArchipelagoClient::SynchReceivedLocations() {
@@ -666,7 +680,7 @@ void ArchipelagoClient::CheckLocation(RandomizerCheck sohCheckId) {
     if (!apClient->get_missing_locations().contains(apLocationId)) {
         return;
     }
-    apClient->LocationChecks({ apLocationId });
+    TryApCall("LocationChecks", [&] { apClient->LocationChecks({ apLocationId }); });
 }
 
 void ArchipelagoClient::OnItemReceived(const ApItem apItem) {
@@ -705,7 +719,7 @@ void ArchipelagoClient::SendGameWon() {
         return;
     }
 
-    apClient->StatusUpdate(APClient::ClientStatus::GOAL);
+    TryApCall("StatusUpdate", [&] { apClient->StatusUpdate(APClient::ClientStatus::GOAL); });
 }
 
 void ArchipelagoClient::SendMessageToConsole(const std::string message) {
@@ -721,7 +735,9 @@ void ArchipelagoClient::SendMessageToConsole(const std::string message) {
         return;
     }
 
-    apClient->Say(message);
+    if (!TryApCall("Say", [&] { apClient->Say(message); })) {
+        ArchipelagoConsole_SendMessage("[ERROR] Could not send message, the connection to the server was lost.");
+    }
 }
 
 void ArchipelagoClient::UpdateHints(const std::vector<nlohmann::json>& hints_json) {
@@ -892,7 +908,7 @@ void ArchipelagoClient::Poll() {
         QueueItem(item);
     }
 
-    apClient->poll();
+    TryApCall("poll", [&] { apClient->poll(); });
 }
 
 void ArchipelagoClient::ResetQueue() {
@@ -916,7 +932,7 @@ void ArchipelagoClient::SetDataStorage(const std::string& key, const nlohmann::j
     std::stringstream full_key;
     full_key << "oot_soh_" << key << "_" << apClient->get_team_number() << "_" << apClient->get_player_number();
     std::list<APClient::DataStorageOperation> operations = { { "replace", value } };
-    apClient->Set(full_key.str(), 0, false, operations);
+    TryApCall("Set", [&] { apClient->Set(full_key.str(), 0, false, operations); });
 }
 void ArchipelagoClient::OpenLocalHint(RandomizerCheck sohCheckId) {
     if (sohCheckId == RC_UNKNOWN_CHECK) {
@@ -958,7 +974,7 @@ void ArchipelagoClient::OpenLocalHint(RandomizerCheck sohCheckId) {
     }
 
     int64_t apLocationId = apClient->get_location_id(std::string(apName));
-    apClient->CreateHints({ apLocationId }, -1);
+    TryApCall("CreateHints", [&] { apClient->CreateHints({ apLocationId }, -1); });
 }
 
 void ArchipelagoClient::OpenForeignHint(RandomizerHint randomizerHintId) {
@@ -976,7 +992,7 @@ void ArchipelagoClient::OpenForeignHint(RandomizerHint randomizerHintId) {
             foreignHint.locationName == Rando::StaticData::GetLocation(RC_LINKS_POCKET)->GetName()) {
             continue;
         }
-        apClient->CreateHints({ foreignHint.locationId }, foreignHint.playerId);
+        TryApCall("CreateHints", [&] { apClient->CreateHints({ foreignHint.locationId }, foreignHint.playerId); });
     }
 }
 
@@ -1326,7 +1342,7 @@ void ArchipelagoClient::UpdateHintStatus(int player, int location, AP_Hint::Hint
             break;
     }
 
-    apClient->UpdateHint(player, location, ap_status);
+    TryApCall("UpdateHint", [&] { apClient->UpdateHint(player, location, ap_status); });
 }
 
 uint8_t ArchipelagoClient::GetConnectionStatus() {
@@ -1377,10 +1393,10 @@ void ArchipelagoClient::SendDeathLink() {
         nlohmann::json data{ { "time", apClient->get_server_time() },
                              { "cause", "Shipwrecked by King Harkinian." },
                              { "source", apClient->get_slot() } };
-        apClient->Bounce(data, {}, {}, { "DeathLink" });
-
-        Notification::Emit({ .message = "Sending Death Link" });
-        ArchipelagoConsole_SendMessage("[LOG] Died, sending death link.");
+        if (TryApCall("Bounce", [&] { apClient->Bounce(data, {}, {}, { "DeathLink" }); })) {
+            Notification::Emit({ .message = "Sending Death Link" });
+            ArchipelagoConsole_SendMessage("[LOG] Died, sending death link.");
+        }
     }
 }
 
@@ -1394,9 +1410,9 @@ void ArchipelagoClient::SendDamageLink(int16_t amount) {
                                  { "uuid", apClient->get_player_number() },
                                  { "source", apClient->get_slot() },
                                  { "damage_points", damagePoints } };
-            apClient->Bounce(data, {}, {}, { "SharedDamage" });
-
-            ArchipelagoConsole_SendMessage("[LOG] Took damage, sending damage link.");
+            if (TryApCall("Bounce", [&] { apClient->Bounce(data, {}, {}, { "SharedDamage" }); })) {
+                ArchipelagoConsole_SendMessage("[LOG] Took damage, sending damage link.");
+            }
         }
     }
 }
@@ -1409,9 +1425,9 @@ void ArchipelagoClient::SendTrapLink() {
             nlohmann::json data{ { "time", apClient->get_server_time() },
                                  { "source", apClient->get_slot() },
                                  { "trap_name", "Ice Trap" } };
-            apClient->Bounce(data, {}, {}, { "TrapLink" });
-
-            ArchipelagoConsole_SendMessage("[LOG] Received trap, sending trap link.");
+            if (TryApCall("Bounce", [&] { apClient->Bounce(data, {}, {}, { "TrapLink" }); })) {
+                ArchipelagoConsole_SendMessage("[LOG] Received trap, sending trap link.");
+            }
         }
     }
 }
@@ -1430,7 +1446,7 @@ void ArchipelagoClient::SetTags() {
     if (CVarGetInteger(CVAR_REMOTE_ARCHIPELAGO("TrapLink"), 0)) {
         tags.push_back("TrapLink");
     }
-    apClient->ConnectUpdate(false, 1, true, tags);
+    TryApCall("ConnectUpdate", [&] { apClient->ConnectUpdate(false, 1, true, tags); });
 }
 
 std::vector<RandomizerGet> archipelagoIceTrapModels = {
