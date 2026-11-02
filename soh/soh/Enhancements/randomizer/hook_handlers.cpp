@@ -226,12 +226,24 @@ bool MeetsRainbowBridgeRequirements() {
 }
 
 // Todo Move this to randomizer context, clear it out on save load etc
-static std::queue<RandomizerCheck> randomizerQueuedChecks;
+// isExternal marks checks we didn't physically collect (e.g. an AP location checked off because another player
+// released their items), so we can skip the GetItem animation for items that are only for other slots.
+struct QueuedCheck {
+    RandomizerCheck rc;
+    bool isExternal;
+};
+static std::queue<QueuedCheck> randomizerQueuedChecks;
 static RandomizerCheck randomizerQueuedCheck = RC_UNKNOWN_CHECK;
 static GetItemEntry randomizerQueuedItemEntry = GET_ITEM_NONE;
 
+// Set while RandomizerOnExternalCheckHandler runs. It finishes some checks by calling Flags_Set* for the current
+// scene, which fires the flag-set hooks below; this lets those hooks know the check came from outside and not
+// from the player walking into it. Main thread only. Relies on the flag-set hooks firing synchronously from
+// within Flags_Set* (true today) - if they ever become deferred this flag would already be cleared when they run.
+static bool sProcessingExternalCheck = false;
+
 void ArchipelagoOnReceiveItem(const int32_t item) {
-    randomizerQueuedChecks.push(RC_ARCHIPELAGO_RECEIVED_ITEM);
+    randomizerQueuedChecks.push({ RC_ARCHIPELAGO_RECEIVED_ITEM, false });
     Rando::Context::GetInstance()->AddReceivedArchipelagoItem(static_cast<RandomizerGet>(item));
 }
 
@@ -282,7 +294,7 @@ void RandomizerOnFlagSetHandler(int16_t flagType, int16_t flag) {
         }
     }
     SPDLOG_INFO("Queuing RC: {}", static_cast<uint32_t>(rc));
-    randomizerQueuedChecks.push(rc);
+    randomizerQueuedChecks.push({ rc, sProcessingExternalCheck });
 }
 
 void RandomizerOnSceneFlagSetHandler(int16_t sceneNum, int16_t flagType, int16_t flag) {
@@ -351,10 +363,19 @@ void RandomizerOnSceneFlagSetHandler(int16_t sceneNum, int16_t flagType, int16_t
         return;
 
     SPDLOG_INFO("Queuing RC: {}", static_cast<uint32_t>(rc));
-    randomizerQueuedChecks.push(rc);
+    randomizerQueuedChecks.push({ rc, sProcessingExternalCheck });
 }
 
 void RandomizerOnExternalCheckHandler(uint32_t randomizerCheck) {
+    // Flag anything queued during this call as external, including checks the Flags_Set* calls below bounce back
+    // through the flag-set hooks. The guard clears it however we return.
+    sProcessingExternalCheck = true;
+    struct ExternalCheckGuard {
+        ~ExternalCheckGuard() {
+            sProcessingExternalCheck = false;
+        }
+    } externalCheckGuard;
+
     RandomizerCheck rc = static_cast<RandomizerCheck>(randomizerCheck);
     Rando::Location* loc = Rando::StaticData::GetLocation(rc);
     s32 flagID = loc->GetCollectionCheck().flag;
@@ -371,7 +392,7 @@ void RandomizerOnExternalCheckHandler(uint32_t randomizerCheck) {
     // happens, leading to a double chest spawn.
     if (rc == RC_HF_OCARINA_OF_TIME_ITEM || rc == RC_ICE_CAVERN_IRON_BOOTS_CHEST || rc == RC_FOREST_TEMPLE_BOW_CHEST ||
         rc == RC_TOT_MASTER_SWORD) {
-        randomizerQueuedChecks.push(rc);
+        randomizerQueuedChecks.push({ rc, true });
         return;
     }
 
@@ -383,7 +404,7 @@ void RandomizerOnExternalCheckHandler(uint32_t randomizerCheck) {
                 Flags_SetTreasure(gPlayState, flagID);
             } else {
                 gSaveContext.sceneFlags[scene].chest |= 1 << flagID;
-                randomizerQueuedChecks.push(rc);
+                randomizerQueuedChecks.push({ rc, true });
             }
             break;
         case SPOILER_CHK_COLLECTABLE:
@@ -391,7 +412,7 @@ void RandomizerOnExternalCheckHandler(uint32_t randomizerCheck) {
                 Flags_SetCollectible(gPlayState, flagID);
             } else {
                 gSaveContext.sceneFlags[scene].collect |= 1 << flagID;
-                randomizerQueuedChecks.push(rc);
+                randomizerQueuedChecks.push({ rc, true });
             }
             break;
         case SPOILER_CHK_RANDOMIZER_INF:
@@ -407,7 +428,7 @@ void RandomizerOnExternalCheckHandler(uint32_t randomizerCheck) {
             Flags_SetInfTable(flagID);
             break;
         case SPOILER_CHK_GOLD_SKULLTULA:
-            randomizerQueuedChecks.push(rc);
+            randomizerQueuedChecks.push({ rc, true });
             // Below doesn't work, temporarily disabled until a solution is found
             // SET_GS_FLAGS((flagID & 0x1F00) >> 8, flagID & 0xFF);
             break;
@@ -442,7 +463,8 @@ void RandomizerOnPlayerUpdateForRCQueueHandler() {
     }
 
     GetItemEntry getItemEntry;
-    RandomizerCheck rc = randomizerQueuedChecks.front();
+    QueuedCheck queuedCheck = randomizerQueuedChecks.front();
+    RandomizerCheck rc = queuedCheck.rc;
     auto loc = Rando::Context::GetInstance()->GetItemLocation(rc);
     uint8_t isGiSkipped = 0;
 
@@ -477,7 +499,18 @@ void RandomizerOnPlayerUpdateForRCQueueHandler() {
         SPDLOG_INFO("Queuing Item mod {} item {} from RC {}", getItemEntry.modIndex, getItemEntry.itemId,
                     static_cast<uint32_t>(rc));
 
-        if (
+        // Items only meant for other slots have no value here, so when they show up from an external check we just
+        // need the location flagged. Skip their GetItem animation no matter what the SkipGetItemAnimation setting is.
+        bool isItemForAnotherPlayer =
+            getItemEntry.modIndex == MOD_RANDOMIZER &&
+            (getItemEntry.getItemId == RG_ARCHIPELAGO_ITEM_PROGRESSIVE ||
+             getItemEntry.getItemId == RG_ARCHIPELAGO_ITEM_USEFUL || getItemEntry.getItemId == RG_ARCHIPELAGO_ITEM_JUNK);
+
+        if (queuedCheck.isExternal && isItemForAnotherPlayer) {
+            Item_DropCollectible(gPlayState, &spawnPos, static_cast<int16_t>(ITEM00_SOH_GIVE_ITEM_ENTRY | 0x8000));
+
+            isGiSkipped = 1;
+        } else if (
             // Skipping ItemGet animation incompatible with checks that require closing a text box to finish
             !(rc == RC_HF_OCARINA_OF_TIME_ITEM && gPlayState->sceneNum == SCENE_HYRULE_FIELD) &&
             !(rc == RC_SPIRIT_TEMPLE_SILVER_GAUNTLETS_CHEST && gPlayState->sceneNum == SCENE_DESERT_COLOSSUS) &&
@@ -2875,7 +2908,7 @@ static void RandomizerRegisterHooks() {
         // Add condition around this to only fire when loading into an Archipelago save file
         ShipInit::Init("IS_ARCHIPELAGO");
 
-        randomizerQueuedChecks = std::queue<RandomizerCheck>();
+        randomizerQueuedChecks = std::queue<QueuedCheck>();
         randomizerQueuedCheck = RC_UNKNOWN_CHECK;
         randomizerQueuedItemEntry = GET_ITEM_NONE;
 
