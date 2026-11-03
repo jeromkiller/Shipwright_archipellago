@@ -107,6 +107,12 @@ void ArchipelagoSettingsWindow::DrawElement() {
                 "or when clear hints are turned on for this slot, it will apply to things like speaking to "
                 "business scrubs and all of the other static hint options.\n\n"
                 "This does not apply to Gossip Stones as they don't always give away the exact location of an item."));
+    UIWidgets::CVarCombobox(
+        "Non-local item models", CVAR_REMOTE_ARCHIPELAGO("ItemModels"), { "None", "Ocarina of Time only", "All" },
+        UIWidgets::ComboboxOptions()
+            .DefaultIndex(2)
+            .Color(THEME_COLOR)
+            .Tooltip("Items for other players appear as themselves or similar items, rather than AP logos."));
 };
 
 void ArchipelagoSettingsWindow::InitElement() {

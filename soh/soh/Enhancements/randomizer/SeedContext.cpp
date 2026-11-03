@@ -419,6 +419,18 @@ GetItemEntry Context::GetFinalGIEntry(const RandomizerCheck rc, const bool check
         giEntry.drawItemId = fakeGiEntry->drawItemId;
         giEntry.drawModIndex = fakeGiEntry->drawModIndex;
         giEntry.drawFunc = fakeGiEntry->drawFunc;
+    } else if (giEntry.getItemId == RG_ARCHIPELAGO_ITEM_PROGRESSION ||
+               giEntry.getItemId == RG_ARCHIPELAGO_ITEM_USEFUL || giEntry.getItemId == RG_ARCHIPELAGO_ITEM_JUNK) {
+        RandomizerGet apRG = ArchipelagoClient::GetInstance().GetApItemLookalike(rc);
+        if (apRG != RG_NONE) {
+            const auto apGiEntry = StaticData::RetrieveItem(apRG).GetGIEntry();
+            giEntry.gid = apGiEntry->gid;
+            giEntry.gi = apGiEntry->gi;
+            giEntry.getItemCategory = apGiEntry->getItemCategory;
+            giEntry.drawItemId = apGiEntry->drawItemId;
+            giEntry.drawModIndex = apGiEntry->drawModIndex;
+            giEntry.drawFunc = apGiEntry->drawFunc;
+        }
     }
     return giEntry;
 }
@@ -992,6 +1004,12 @@ void Context::ParseArchipelagoItemsLocations(const std::vector<ArchipelagoClient
                 // None of these flags being present means it's junk.
             } else {
                 itemLocationTable[rc].SetPlacedItem(RG_ARCHIPELAGO_ITEM_JUNK);
+            }
+
+            if (ArchipelagoClient::GetInstance().GetApItemLookalike(rc) == RG_ICE_TRAP) {
+                RandomizerGet iceTrapItem = ArchipelagoClient::GetInstance().GetIceTrapItem();
+                overrides[rc] = ItemOverride(rc, iceTrapItem);
+                overrides[rc].SetTrickName(Text(Traps::GetTrapName(iceTrapItem)));
             }
         }
     }

@@ -30,6 +30,7 @@ class ArchipelagoClient {
         std::string hintName;
         std::string locationName;
         std::string playerName;
+        std::string gameName;
         int playerNumber;
         unsigned int flags;
         uint64_t index;
@@ -90,6 +91,8 @@ class ArchipelagoClient {
     void OnItemReceived(const ApItem apItem);
     void QueueItem(const ApItem item);
     void QueueExternalCheck(int64_t apLocation);
+
+    RandomizerGet GetApItemLookalike(RandomizerCheck rc);
 
     void SendGameWon();
     void SendMessageToConsole(const std::string message);

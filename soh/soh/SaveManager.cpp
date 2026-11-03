@@ -274,7 +274,10 @@ void SaveManager::SaveRandomizer(SaveContext* saveContext, int sectionID, bool f
     SaveManager::Instance->SaveArray("itemLocations", RC_MAX, [&](size_t i) {
         SaveManager::Instance->SaveStruct("", [&]() {
             SaveManager::Instance->SaveData("rgID", randoContext->GetItemLocation(i)->GetPlacedRandomizerGet());
-            if (randoContext->GetItemLocation(i)->GetPlacedRandomizerGet() == RG_ICE_TRAP) {
+            RandomizerGet rg = randoContext->GetItemLocation(i)->GetPlacedRandomizerGet();
+            if ((rg == RG_ICE_TRAP) ||
+                (rg == RG_ARCHIPELAGO_ITEM_PROGRESSION &&
+                 ArchipelagoClient::GetInstance().GetApItemLookalike(static_cast<RandomizerCheck>(i)) == RG_ICE_TRAP)) {
                 SaveManager::Instance->SaveData("fakeRgID", randoContext->GetItemOverride(i).LooksLike());
                 SaveManager::Instance->SaveStruct("trickName", [&]() {
                     SaveManager::Instance->SaveData("english",
